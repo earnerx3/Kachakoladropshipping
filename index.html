@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Dropshipping - Banana Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #FDD835; /* Banana Yellow */
+            --primary-glow: rgba(253, 216, 53, 0.4);
+            --bg-dark: #0D1117;
+            --card-bg: #161B22;
+            --glass-bg: rgba(22, 27, 34, 0.7);
+            --text-main: #ffffff;
+            --text-muted: #8B949E;
+            --border: #30363D;
+            --success: #00C851;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Hind Siliguri', sans-serif; }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 80px; /* Space for nav */
+            overflow-x: hidden;
+        }
+
+        /* --- Header / Profile Section --- */
+        .header {
+            background: linear-gradient(180deg, rgba(253, 216, 53, 0.15) 0%, rgba(13, 17, 23, 0) 100%);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar {
+            width: 45px; height: 45px; border-radius: 50%;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+        .user-text h3 { font-size: 16px; font-weight: 600; margin: 0; }
+        .user-text p { font-size: 12px; color: var(--text-muted); }
+        
+        .balance-badge {
+            background: rgba(253, 216, 53, 0.1);
+            border: 1px solid var(--primary);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* --- Content Container --- */
+        .container { padding: 20px; max-width: 480px; margin: 0 auto; }
+
+        /* --- Hero Section --- */
+        .hero-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: fadeIn 0.8s ease;
+        }
+        .hero-icon {
+            font-size: 40px; color: var(--primary); margin-bottom: 10px;
+            filter: drop-shadow(0 0 10px var(--primary-glow));
+        }
+        .hero-title { font-size: 22px; margin-bottom: 10px; font-weight: 700; }
+        .hero-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+
+        /* --- Video Section --- */
+        .video-box {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+        }
+        .video-box iframe {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
+        }
+
+        /* --- Action Buttons --- */
+        .action-area { display: flex; flex-direction: column; gap: 15px; }
+        
+        .btn-main {
+            background: linear-gradient(135deg, var(--primary) 0%, #FBC02D 100%);
+            color: #000;
+            border: none;
+            padding: 16px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 20px var(--primary-glow);
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .btn-main:active { transform: scale(0.97); }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* --- Modal / Popup (Deposit Form) --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: flex-end; /* Mobile Bottom Sheet Style */
+        }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.3s; }
+
+        .modal-box {
+            background: #1C2128;
+            width: 100%; max-width: 480px;
+            border-top-left-radius: 25px;
+            border-top-right-radius: 25px;
+            padding: 25px;
+            border-top: 1px solid var(--border);
+            position: relative;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header { text-align: center; margin-bottom: 20px; }
+        .modal-header h2 { color: var(--primary); }
+        .close-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(255,255,255,0.1); border: none;
+            color: #fff; width: 30px; height: 30px; border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; color: var(--text-muted); margin-bottom: 8px; font-size: 13px; }
+        .form-input {
+            width: 100%; padding: 14px; background: #0D1117;
+            border: 1px solid var(--border); border-radius: 12px;
+            color: #fff; outline: none; transition: 0.3s;
+        }
+        .form-input:focus { border-color: var(--primary); }
+
+        .admin-number-card {
+            background: rgba(253, 216, 53, 0.1);
+            border: 1px dashed var(--primary);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .copy-icon { cursor: pointer; margin-left: 8px; color: var(--primary); }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(22, 27, 34, 0.9);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around;
+            padding: 10px 0; z-index: 90;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: var(--text-muted); font-size: 10px; gap: 4px;
+            text-decoration: none; cursor: pointer;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 20px; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-info">
+            <img src="https://placehold.co/100x100" id="userAvatar" class="user-avatar" alt="Profile">
+            <div class="user-text">
+                <h3 id="userName">Loading...</h3>
+                <p id="userId">ID: ...</p>
+            </div>
+        </div>
+        <div class="balance-badge">
+            ৳ <span id="userBalance">0</span>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <div class="hero-card">
+            <i class="fas fa-boxes-packing hero-icon"></i>
+            <div class="hero-title">Banana Dropshipping</div>
+            <div class="hero-desc">
+                নিজস্ব পণ্য ছাড়াই ব্যবসা শুরু করুন। আমরা প্রোডাক্ট সোর্স করব, আপনি শুধু সেল করবেন এবং প্রফিট বুঝে নিবেন।
+            </div>
+        </div>
+
+        <div style="margin-bottom: 10px; font-weight: 600; color: var(--text-muted);">🎥 কিভাবে শুরু করবেন?</div>
+        <div class="video-box">
+            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0" allowfullscreen></iframe>
+        </div>
+
+        <div class="action-area">
+            <button class="btn-main" onclick="handleStartBtn()">
+                <i class="fas fa-rocket"></i> ড্রপশিপিং শুরু করুন
+            </button>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-outline" style="flex:1;" onclick="openLink('https://t.me/YourSupportChannel')">
+                    <i class="fab fa-telegram"></i> সাপোর্ট গ্রুপ
+                </button>
+                <button class="btn-outline" style="flex:1;" onclick="openLink('https://t.me/YourAdmin')">
+                    <i class="fas fa-headset"></i> এডমিন চ্যাট
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="depositModal">
+        <div class="modal-box">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            
+            <div class="modal-header">
+                <h2>🛍️ মেম্বারশিপ একটিভ করুন</h2>
+                <p style="font-size: 13px; color: #888;">ড্রপশিপিং প্যানেল এক্সেস করতে ফি প্রদান করুন</p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">পেমেন্ট মেথড সিলেক্ট করুন</label>
+                <select id="payMethod" class="form-input" onchange="showNumber()">
+                    <option value="">-- Select --</option>
+                    <option value="bkash">bKash (Send Money)</option>
+                    <option value="nagad">Nagad (Send Money)</option>
+                    <option value="rocket">Rocket (Send Money)</option>
+                </select>
+            </div>
+
+            <div id="adminNumBox" class="admin-number-card">
+                <span style="color:#bbb; font-size:12px;">নিচের নাম্বারে টাকা পাঠান:</span><br>
+                <span id="adminNum" style="font-size: 20px; color: var(--primary); font-weight: bold; letter-spacing: 1px;">...</span>
+                <i class="fas fa-copy copy-icon" onclick="copyNum()"></i>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">টাকার পরিমাণ (BDT)</label>
+                <input type="number" id="payAmount" class="form-input" placeholder="500">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">আপনার নাম্বার</label>
+                <input type="number" id="senderNum" class="form-input" placeholder="017xxxxxxxx">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Transaction ID (TrxID)</label>
+                <input type="text" id="trxID" class="form-input" placeholder="Ex: 9G7D...">
+            </div>
+
+            <button class="btn-main" style="width:100%; margin-top:10px;" id="submitBtn" onclick="submitRequest()">
+                রিকোয়েস্ট পাঠান <i class="fas fa-paper-plane"></i>
+            </button>
+
+            <div style="text-align:center; margin-top:15px;">
+                <span style="font-size:12px; color:var(--text-muted); cursor:pointer; text-decoration:underline;" onclick="showHistoryStatus()">
+                    আমার আগের রিকোয়েস্ট স্ট্যাটাস দেখুন
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fas fa-home"></i> <span>Home</span>
+        </a>
+        <a href="#" class="nav-item active">
+            <i class="fas fa-shipping-fast"></i> <span>Dropship</span>
+        </a>
+        <a href="profile.html" class="nav-item"> <i class="fas fa-user"></i> <span>Profile</span>
+        </a>
+    </div>
+
+    <script>
+        // --- CONFIG & INIT ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2yM6GXC2kZMEEMYjdsveDpDHfKzriq0I",
+            authDomain: "nahid-fa459.firebaseapp.com",
+            projectId: "nahid-fa459",
+            storageBucket: "nahid-fa459.firebasestorage.app",
+            messagingSenderId: "970994023392",
+            appId: "1:970994023392:web:571332949894edcf4d0985"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let currentUser = null;
+        let depositConfig = {
+            bkash: "01700000000", 
+            nagad: "01800000000",
+            rocket: "01900000000"
+        };
+        const SHOP_LINK = "https://dailydeal.sell-bazar.com";
+
+        // --- LOAD DATA ---
+        window.onload = async () => {
+            const user = tg.initDataUnsafe.user;
+            if(!user) {
+                alert("Please open from Telegram");
+                return;
+            }
+            currentUser = user;
+
+            // 1. Set Header Info
+            document.getElementById('userName').innerText = user.first_name;
+            document.getElementById('userId').innerText = "ID: " + user.id;
+            if(user.photo_url) document.getElementById('userAvatar').src = user.photo_url;
+
+            // 2. Fetch Balance & Deposit Config from Firestore
+            try {
+                // Get Balance
+                db.collection('users').doc(String(user.id)).onSnapshot(doc => {
+                    if(doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('userBalance').innerText = data.balance || 0;
+                    }
+                });
+
+                // Get Admin Numbers
+                const configDoc = await db.collection('config').doc('appConfig').get();
+                if(configDoc.exists && configDoc.data().depositNumbers) {
+                    depositConfig = configDoc.data().depositNumbers;
+                }
+            } catch(e) { console.error(e); }
+        };
+
+        // --- FUNCTIONS ---
+
+        // 1. Handle "Start Dropshipping" Click
+        async function handleStartBtn() {
+            // Check status from DB
+            const btn = document.querySelector('.btn-main');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+
+            try {
+                // Check if already approved
+                const snap = await db.collection('deposits')
+                    .where('userId', '==', String(currentUser.id))
+                    .orderBy('date', 'desc')
+                    .limit(1)
+                    .get();
+
+                btn.innerHTML = originalText;
+
+                if(!snap.empty) {
+                    const status = snap.docs[0].data().status;
+                    if(status === 'approved') {
+                        // Success -> Open Shop
+                        tg.openLink(SHOP_LINK);
+                    } else if (status === 'pending') {
+                        tg.showAlert("আপনার আগের রিকোয়েস্টটি পেন্ডিং আছে। এডমিন কনফার্ম করার জন্য অপেক্ষা করুন।");
+                    } else {
+                        // Rejected or other -> Show Modal
+                        openModal();
+                    }
+                } else {
+                    // No history -> Show Modal
+                    openModal();
+                }
+
+            } catch(e) {
+                console.error(e);
+                openModal(); // Fallback
+            }
+        }
+
+        // 2. Modal Logic
+        function openModal() {
+            document.getElementById('depositModal').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('depositModal').classList.remove('active');
+        }
+
+        // 3. Show Admin Number
+        function showNumber() {
+            const method = document.getElementById('payMethod').value;
+            const box = document.getElementById('adminNumBox');
+            if(method && depositConfig[method]) {
+                box.style.display = 'block';
+                document.getElementById('adminNum').innerText = depositConfig[method];
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        // 4. Copy Number
+        function copyNum() {
+            const num = document.getElementById('adminNum').innerText;
+            navigator.clipboard.writeText(num);
+            tg.HapticFeedback.notificationOccurred('success');
+            // Tooltip or temporary alert
+            const icon = document.querySelector('.copy-icon');
+            icon.classList.remove('fa-copy');
+            icon.classList.add('fa-check');
+            setTimeout(() => {
+                icon.classList.remove('fa-check');
+                icon.classList.add('fa-copy');
+            }, 1500);
+        }
+
+        // 5. Submit Logic
+        async function submitRequest() {
+            const method = document.getElementById('payMethod').value;
+            const amount = document.getElementById('payAmount').value;
+            const sender = document.getElementById('senderNum').value;
+            const trx = document.getElementById('trxID').value;
+
+            if(!method || !amount || !sender || !trx) {
+                tg.showAlert("দয়া করে সব তথ্য পূরণ করুন!");
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> পাঠানো হচ্ছে...';
+
+            try {
+                await db.collection('deposits').add({
+                    userId: String(currentUser.id),
+                    userName: currentUser.first_name,
+                    amount: parseFloat(amount),
+                    method: method,
+                    senderNumber: sender,
+                    trxId: trx,
+                    status: 'pending',
+                    date: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                closeModal();
+                tg.showAlert("সফল হয়েছে! আপনার পেমেন্ট ভেরিফাই করে ড্রপশিপিং প্যানেল এক্সেস দেওয়া হবে।");
+                
+                // Clear inputs
+                document.getElementById('payAmount').value = '';
+                document.getElementById('trxID').value = '';
+
+            } catch(e) {
+                tg.showAlert("ত্রুটি হয়েছে! আবার চেষ্টা করুন।");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'রিকোয়েস্ট পাঠান <i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        function openLink(url) {
+            tg.openLink(url);
+        }
+
+        function showHistoryStatus() {
+            alert("এই ফিচারটি শীঘ্রই আসছে! আপাতত এডমিনের সাথে যোগাযোগ করুন।");
+            // You can implement a separate modal or list logic here if needed
+        }
+
+    </script>
+</body>
+</html>
