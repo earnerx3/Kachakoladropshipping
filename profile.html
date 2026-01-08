@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Banana Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #FDD835;
+            --primary-dark: #FBC02D;
+            --bg-dark: #0D1117;
+            --card-bg: #161B22;
+            --border: #30363D;
+            --text-main: #ffffff;
+            --text-muted: #8B949E;
+            --gradient-gold: linear-gradient(135deg, #FDD835 0%, #FFF59D 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Hind Siliguri', sans-serif; }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 90px;
+            overflow-x: hidden;
+        }
+
+        /* --- Profile Header --- */
+        .profile-header {
+            background: linear-gradient(180deg, rgba(253, 216, 53, 0.15) 0%, var(--bg-dark) 100%);
+            padding: 30px 20px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .profile-pic-wrapper {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px;
+        }
+
+        .profile-pic {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            object-fit: cover;
+            box-shadow: 0 0 20px rgba(253, 216, 53, 0.3);
+        }
+
+        .level-badge {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gradient-gold);
+            color: #000;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 800;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .user-name { font-size: 22px; font-weight: 700; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .verified-icon { color: #00C851; font-size: 16px; }
+        
+        .user-id-box {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .user-id-box:active { background: rgba(255,255,255,0.1); }
+
+        /* XP / Level Bar */
+        .level-progress-container {
+            max-width: 300px; margin: 0 auto;
+        }
+        .level-info {
+            display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: var(--text-muted);
+        }
+        .progress-bar-bg {
+            width: 100%; height: 6px; background: #333; border-radius: 3px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; background: var(--primary); width: 0%; transition: width 1s ease;
+        }
+
+        /* --- Dashboard Stats --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+        }
+        .stat-yellow::before { background: var(--primary); }
+        .stat-green::before { background: #00C851; }
+        .stat-blue::before { background: #2196F3; }
+        .stat-red::before { background: #FF5252; }
+
+        .stat-title { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+        .stat-value { font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .stat-icon { position: absolute; right: 10px; bottom: 10px; font-size: 24px; opacity: 0.1; }
+
+        /* --- Menu List --- */
+        .menu-section { padding: 0 20px; margin-bottom: 20px; }
+        .menu-title { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+        
+        .menu-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--card-bg);
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .menu-item:first-child { border-top-left-radius: 15px; border-top-right-radius: 15px; }
+        .menu-item:last-child { border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; border-bottom: none; }
+        .menu-item:active { background: rgba(253, 216, 53, 0.05); }
+
+        .menu-left { display: flex; align-items: center; gap: 15px; }
+        .menu-icon {
+            width: 35px; height: 35px; background: rgba(255,255,255,0.05);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            color: var(--primary);
+        }
+        .menu-text { font-size: 15px; font-weight: 500; }
+        .menu-arrow { color: var(--text-muted); font-size: 14px; }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around;
+            padding: 12px 0; z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: var(--text-muted); font-size: 10px; gap: 5px;
+            text-decoration: none; cursor: pointer; transition: 0.3s;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 20px; }
+
+        /* Alert */
+        .custom-alert {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+            background: #21262D; padding: 20px; border-radius: 15px;
+            text-align: center; border: 1px solid var(--border);
+            opacity: 0; pointer-events: none; transition: 0.3s; z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .custom-alert.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+
+    </style>
+</head>
+<body>
+
+    <div class="profile-header">
+        <div class="profile-pic-wrapper">
+            <img src="https://placehold.co/100x100" id="profilePic" class="profile-pic" alt="Profile">
+            <div class="level-badge" id="levelBadge">LVL 1</div>
+        </div>
+        
+        <h2 class="user-name">
+            <span id="userName">User Name</span>
+            <i class="fas fa-check-circle verified-icon"></i>
+        </h2>
+        
+        <div class="user-id-box" onclick="copyUserId()">
+            <span id="userIdDisplay">ID: ...</span> 
+            <i class="far fa-copy" style="margin-left: 8px;"></i>
+        </div>
+
+        <div class="level-progress-container">
+            <div class="level-info">
+                <span>Experience</span>
+                <span id="xpText">0 / 1000 XP</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="xpBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card stat-yellow">
+            <div class="stat-title">মেইন ব্যালেন্স</div>
+            <div class="stat-value">৳ <span id="balance">0.00</span></div>
+            <i class="fas fa-wallet stat-icon"></i>
+        </div>
+        <div class="stat-card stat-green">
+            <div class="stat-title">মোট ইনকাম</div>
+            <div class="stat-value">৳ <span id="totalEarnings">0.00</span></div>
+            <i class="fas fa-chart-line stat-icon"></i>
+        </div>
+        <div class="stat-card stat-blue">
+            <div class="stat-title">টোটাল রেফার</div>
+            <div class="stat-value"><span id="referrals">0</span> জন</div>
+            <i class="fas fa-users stat-icon"></i>
+        </div>
+        <div class="stat-card stat-red">
+            <div class="stat-title">পয়েন্ট</div>
+            <div class="stat-value"><span id="points">0</span></div>
+            <i class="fas fa-coins stat-icon"></i>
+        </div>
+    </div>
+
+    <div class="menu-section">
+        <div class="menu-title">Account Settings</div>
+        
+        <div class="menu-item" onclick="comingSoon()">
+            <div class="menu-left">
+                <div class="menu-icon"><i class="fas fa-user-edit"></i></div>
+                <div class="menu-text">এডিট প্রোফাইল</div>
+            </div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+
+        <div class="menu-item" onclick="openLink('withdrawPage')">
+            <div class="menu-left">
+                <div class="menu-icon"><i class="fas fa-history"></i></div>
+                <div class="menu-text">উইথড্র হিস্ট্রি</div>
+            </div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+        
+        <div class="menu-item" onclick="openLink('referPage')">
+             <div class="menu-left">
+                <div class="menu-icon"><i class="fas fa-share-alt"></i></div>
+                <div class="menu-text">রেফারেল লিংক</div>
+            </div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+    </div>
+
+    <div class="menu-section">
+        <div class="menu-title">Support & Info</div>
+
+        <div class="menu-item" onclick="tg.openTelegramLink('https://t.me/YourSupport')">
+            <div class="menu-left">
+                <div class="menu-icon"><i class="fab fa-telegram-plane"></i></div>
+                <div class="menu-text">সাপোর্ট গ্রুপ</div>
+            </div>
+            <i class="fas fa-external-link-alt menu-arrow"></i>
+        </div>
+
+        <div class="menu-item" onclick="comingSoon()">
+            <div class="menu-left">
+                <div class="menu-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="menu-text">প্রাইভেসি পলিসি</div>
+            </div>
+            <i class="fas fa-chevron-right menu-arrow"></i>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fas fa-home"></i> <span>Home</span>
+        </a>
+        <a href="dropshipping.html" class="nav-item">
+            <i class="fas fa-shipping-fast"></i> <span>Dropship</span>
+        </a>
+        <a href="profile.html" class="nav-item active">
+            <i class="fas fa-user"></i> <span>Profile</span>
+        </a>
+    </div>
+
+    <div class="custom-alert" id="customAlert">
+        <div style="font-size:30px; margin-bottom:10px;">🚧</div>
+        <h3 style="color:white; margin-bottom:5px;">Info</h3>
+        <p id="alertMsg" style="color:#aaa; font-size:14px;">This feature is coming soon!</p>
+    </div>
+
+    <script>
+        // --- 1. FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2yM6GXC2kZMEEMYjdsveDpDHfKzriq0I",
+            authDomain: "nahid-fa459.firebaseapp.com",
+            projectId: "nahid-fa459",
+            storageBucket: "nahid-fa459.firebasestorage.app",
+            messagingSenderId: "970994023392",
+            appId: "1:970994023392:web:571332949894edcf4d0985"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let currentUser = null;
+
+        // --- 2. INIT & DATA LOAD ---
+        window.onload = function() {
+            const user = tg.initDataUnsafe.user;
+            if (user) {
+                currentUser = user;
+                loadUserData(user.id);
+                
+                // Set static data immediately
+                if(user.photo_url) document.getElementById('profilePic').src = user.photo_url;
+                document.getElementById('userName').innerText = user.first_name + " " + (user.last_name || "");
+                document.getElementById('userIdDisplay').innerText = "ID: " + user.id;
+            } else {
+                // Fallback for testing in browser
+                // loadUserData('TEST_USER_ID');
+            }
+        };
+
+        function loadUserData(userId) {
+            db.collection('users').doc(String(userId)).onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // Update Stats
+                    const balance = data.balance || 0;
+                    const totalEarned = data.totalEarnings || 0;
+                    
+                    document.getElementById('balance').innerText = balance.toFixed(2);
+                    document.getElementById('totalEarnings').innerText = totalEarned.toFixed(2);
+                    document.getElementById('referrals').innerText = data.referredUsersCount || 0;
+                    document.getElementById('points').innerText = Math.floor(balance * 10); // Example conversion
+
+                    // Calculate Level (Gamification)
+                    // Example: Every 1000 earnings = 1 Level
+                    const level = Math.floor(totalEarned / 1000) + 1;
+                    const nextLevelReq = level * 1000;
+                    const currentProgress = totalEarned % 1000;
+                    const progressPercent = (currentProgress / 1000) * 100;
+
+                    document.getElementById('levelBadge').innerText = "LVL " + level;
+                    document.getElementById('xpText').innerText = `${Math.floor(currentProgress)} / 1000 XP`;
+                    document.getElementById('xpBar').style.width = `${progressPercent}%`;
+
+                }
+            });
+        }
+
+        // --- 3. UTILITIES ---
+        function copyUserId() {
+            if(currentUser) {
+                navigator.clipboard.writeText(String(currentUser.id));
+                showAlert("আইডি কপি হয়েছে!");
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+
+        function openLink(page) {
+            if(page.includes('html')) {
+                window.location.href = page;
+            } else {
+                // Handle internal navigation if using single page app structure, 
+                // otherwise redirect
+                window.location.href = 'index.html'; // Assuming navigation logic is in index
+            }
+        }
+
+        function comingSoon() {
+            showAlert("এই ফিচারটি শীঘ্রই আসছে! 🛠️");
+            tg.HapticFeedback.notificationOccurred('warning');
+        }
+
+        let alertTimeout;
+        function showAlert(msg) {
+            const alertBox = document.getElementById('customAlert');
+            document.getElementById('alertMsg').innerText = msg;
+            alertBox.classList.add('active');
+            
+            clearTimeout(alertTimeout);
+            alertTimeout = setTimeout(() => {
+                alertBox.classList.remove('active');
+            }, 2000);
+        }
+
+    </script>
+</body>
+</html>
