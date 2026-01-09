@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banana Shop - Home</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #FDD835;
+            --bg-dark: #0D1117;
+            --card-bg: #161B22;
+            --border: #30363D;
+            --text-main: #ffffff;
+            --text-muted: #8B949E;
+            --price-color: #00C851;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding-bottom: 90px;
+            overflow-x: hidden;
+        }
+
+        /* --- Minimal Header --- */
+        .mini-header {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 50;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+        }
+        .header-avatar {
+            width: 35px; height: 35px; border-radius: 50%;
+            border: 2px solid var(--primary); object-fit: cover;
+        }
+        .header-name { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        .header-badge {
+            font-size: 10px; background: rgba(253, 216, 53, 0.2); 
+            color: var(--primary); padding: 2px 6px; border-radius: 4px; margin-left: auto;
+        }
+
+        /* --- Hero / Banner --- */
+        .hero-banner {
+            margin: 20px;
+            background: linear-gradient(135deg, #FDD835 0%, #F57F17 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: #000;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-banner h2 { font-weight: 800; font-size: 22px; margin-bottom: 5px; }
+        .hero-banner p { font-size: 12px; font-weight: 500; opacity: 0.8; }
+        .hero-img {
+            position: absolute; right: -10px; bottom: -10px;
+            font-size: 60px; opacity: 0.3; transform: rotate(-15deg);
+        }
+
+        /* --- Product Grid --- */
+        .section-title { padding: 0 20px; font-size: 16px; font-weight: 600; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 0 20px;
+        }
+
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .product-card:active { transform: scale(0.98); }
+
+        .prod-img-box {
+            width: 100%; height: 140px;
+            background: #21262D;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .prod-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .cart-btn {
+            position: absolute; bottom: 8px; right: 8px;
+            background: var(--primary); color: #000;
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 14px;
+        }
+
+        .prod-info { padding: 12px; }
+        .prod-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .prod-price { font-size: 14px; font-weight: 700; color: var(--price-color); }
+        .prod-stock { font-size: 10px; color: var(--text-muted); }
+
+        /* --- Full Screen Product Modal --- */
+        .product-modal {
+            position: fixed; inset: 0; background: var(--bg-dark);
+            z-index: 2000; display: none; flex-direction: column;
+            overflow-y: auto; animation: slideUp 0.3s ease;
+        }
+        .modal-active { display: flex; }
+
+        .pm-header {
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: 15px; display: flex; justify-content: space-between;
+            z-index: 10;
+        }
+        .pm-close {
+            background: rgba(0,0,0,0.5); color: #fff; width: 35px; height: 35px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        .pm-img-area {
+            width: 100%; height: 45vh; background: #21262D;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pm-img { width: 100%; height: 100%; object-fit: cover; }
+
+        .pm-details {
+            padding: 25px; background: var(--card-bg);
+            flex: 1; border-top-left-radius: 30px; border-top-right-radius: 30px;
+            margin-top: -30px; position: relative;
+            border-top: 1px solid var(--border);
+        }
+
+        .pm-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+        .pm-price { font-size: 24px; color: var(--primary); font-weight: 700; margin-bottom: 20px; }
+        .pm-desc-title { font-size: 14px; color: var(--text-muted); margin-bottom: 5px; font-weight: 600; }
+        .pm-desc { font-size: 13px; color: #ccc; line-height: 1.6; margin-bottom: 30px; }
+
+        .pm-action {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--card-bg); padding: 15px 20px;
+            border-top: 1px solid var(--border);
+            display: flex; gap: 15px;
+        }
+        .btn-buy {
+            flex: 1; background: var(--primary); color: #000;
+            border: none; padding: 15px; border-radius: 12px;
+            font-weight: 700; font-size: 16px; display: flex;
+            align-items: center; justify-content: center; gap: 8px;
+        }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(22, 27, 34, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around;
+            padding: 12px 0; z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: var(--text-muted); font-size: 10px; gap: 5px;
+            text-decoration: none; cursor: pointer; transition: 0.3s;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 20px; }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="mini-header">
+        <img src="https://placehold.co/100x100" id="headerProfile" class="header-avatar">
+        <div class="header-name" id="headerName">User</div>
+        <div class="header-badge" id="statusBadge">Checking...</div>
+    </div>
+
+    <div class="hero-banner">
+        <h2>Premium Dropshipping</h2>
+        <p>সেরা প্রোডাক্ট রিসেল করুন এবং ঘরে বসে আয় করুন।</p>
+        <i class="fas fa-shipping-fast hero-img"></i>
+    </div>
+
+    <div class="section-title">
+        <span>Trending Products</span>
+        <span style="font-size:12px; color:var(--primary);">View All</span>
+    </div>
+
+    <div class="product-grid" id="productList">
+        <div style="grid-column: span 2; text-align:center; padding: 20px; color:#666;">
+            Loading Products...
+        </div>
+    </div>
+
+    <div class="product-modal" id="prodModal">
+        <div class="pm-header">
+            <div class="pm-close" onclick="closeModal()">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <div class="pm-close">
+                <i class="far fa-heart"></i>
+            </div>
+        </div>
+        
+        <div class="pm-img-area">
+            <img src="" id="pmImage" class="pm-img">
+        </div>
+
+        <div class="pm-details">
+            <div class="pm-title" id="pmTitle">Product Name</div>
+            <div class="pm-price" id="pmPrice">৳ 0</div>
+            
+            <div class="pm-desc-title">Description</div>
+            <div class="pm-desc" id="pmDesc">
+                This is a premium product available for dropshipping. High profit margin guaranteed.
+            </div>
+        </div>
+
+        <div class="pm-action">
+            <button class="btn-buy" onclick="handleBuy()">
+                <i class="fas fa-shopping-bag"></i> Order Now
+            </button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="home.html" class="nav-item active">
+            <i class="fas fa-home"></i> <span>Home</span>
+        </a>
+        <a href="dropshipping.html" class="nav-item">
+            <i class="fas fa-shipping-fast"></i> <span>Dropship</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user"></i> <span>Profile</span>
+        </a>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2yM6GXC2kZMEEMYjdsveDpDHfKzriq0I",
+            authDomain: "nahid-fa459.firebaseapp.com",
+            projectId: "nahid-fa459",
+            storageBucket: "nahid-fa459.firebasestorage.app",
+            messagingSenderId: "970994023392",
+            appId: "1:970994023392:web:571332949894edcf4d0985"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let currentUser = null;
+        let isDropshipper = false; // Status Flag
+
+        // --- MOCK PRODUCTS (যেহেতু ডাটাবেজে প্রোডাক্ট নেই, তাই ডেমো দেখাচ্ছি) ---
+        // পরবর্তীতে আপনি db.collection('products') থেকে ফেচ করতে পারবেন
+        const mockProducts = [
+            {
+                id: 1,
+                name: "Premium Smart Watch",
+                price: "2,500",
+                img: "https://i.ibb.co.com/84j7qWw/watch.jpg", 
+                desc: "অরিজিনাল স্মার্ট ওয়াচ। ওয়াটারপ্রুফ এবং লং ব্যাটারি লাইফ। ১ বছরের ওয়ারেন্টি আছে।"
+            },
+            {
+                id: 2,
+                name: "Wireless Earbuds Pro",
+                price: "1,200",
+                img: "https://i.ibb.co.com/jM8Vz0z/pods.jpg",
+                desc: "নয়েজ ক্যান্সেলেশন সহ প্রিমিয়াম ইয়ারবাড। বক্সে চার্জার সহ পাবেন।"
+            },
+            {
+                id: 3,
+                name: "Leather Wallet",
+                price: "850",
+                img: "https://i.ibb.co.com/Kq2yv50/wallet.jpg",
+                desc: "১০০% জেনুইন লেদার ওয়ালেট। স্টাইলিশ এবং দীর্ঘস্থায়ী।"
+            },
+            {
+                id: 4,
+                name: "Sneaker Shoes",
+                price: "3,200",
+                img: "https://i.ibb.co.com/W2zC5qG/shoes.jpg",
+                desc: "কমফোর্টেবল এবং ট্রেন্ডি স্নিকার। সব সাইজ এভেলেবল আছে।"
+            }
+        ];
+
+        // --- INIT ---
+        window.onload = async () => {
+            const user = tg.initDataUnsafe.user;
+            if(!user) return; // Handle browser test case
+            currentUser = user;
+
+            // 1. Setup Header
+            document.getElementById('headerName').innerText = user.first_name;
+            if(user.photo_url) document.getElementById('headerProfile').src = user.photo_url;
+
+            // 2. Check User Status (Dropshipper Active?)
+            checkUserStatus();
+
+            // 3. Render Products
+            renderProducts();
+        };
+
+        // --- FUNCTIONS ---
+
+        // ১. চেক করা ইউজার মেম্বার কিনা
+        async function checkUserStatus() {
+            const badge = document.getElementById('statusBadge');
+            try {
+                // Check Deposits Collection for 'approved'
+                const snap = await db.collection('deposits')
+                    .where('userId', '==', String(currentUser.id))
+                    .where('status', '==', 'approved')
+                    .limit(1)
+                    .get();
+
+                if(!snap.empty) {
+                    isDropshipper = true;
+                    badge.innerText = "Active ✅";
+                    badge.style.background = "rgba(0, 200, 81, 0.2)";
+                    badge.style.color = "#00C851";
+                } else {
+                    isDropshipper = false;
+                    badge.innerText = "Member";
+                    badge.style.background = "#333";
+                    badge.style.color = "#ccc";
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // ২. প্রোডাক্ট রেন্ডার করা
+        function renderProducts() {
+            const list = document.getElementById('productList');
+            list.innerHTML = "";
+
+            mockProducts.forEach(prod => {
+                const div = document.createElement('div');
+                div.className = 'product-card';
+                div.onclick = () => handleProductClick(prod);
+                div.innerHTML = `
+                    <div class="prod-img-box">
+                        <img src="${prod.img}" class="prod-img" onerror="this.src='https://placehold.co/200'">
+                        <div class="cart-btn"><i class="fas fa-plus"></i></div>
+                    </div>
+                    <div class="prod-info">
+                        <div class="prod-title">${prod.name}</div>
+                        <div class="prod-price">৳ ${prod.price}</div>
+                        <div class="prod-stock">In Stock</div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // ৩. প্রোডাক্টে ক্লিক করলে কী হবে
+        function handleProductClick(prod) {
+            // MAIN LOGIC: If not active -> Redirect to dropshipping.html
+            if(!isDropshipper) {
+                tg.showAlert("এই প্রোডাক্ট এক্সেস করতে ড্রপশিপিং মেম্বারশিপ একটিভ করুন।");
+                setTimeout(() => {
+                    window.location.href = 'dropshipping.html';
+                }, 500);
+                return;
+            }
+
+            // If active -> Show Details Modal
+            document.getElementById('pmImage').src = prod.img;
+            document.getElementById('pmTitle').innerText = prod.name;
+            document.getElementById('pmPrice').innerText = "৳ " + prod.price;
+            document.getElementById('pmDesc').innerText = prod.desc;
+            
+            document.getElementById('prodModal').classList.add('modal-active');
+        }
+
+        function closeModal() {
+            document.getElementById('prodModal').classList.remove('modal-active');
+        }
+
+        function handleBuy() {
+            tg.showConfirm("আপনি কি এই প্রোডাক্টটি অর্ডার করতে চান?", (confirm) => {
+                if(confirm) {
+                    tg.showAlert("অর্ডার রিকোয়েস্ট পাঠানো হয়েছে! (Demo)");
+                    closeModal();
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
