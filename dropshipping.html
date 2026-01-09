@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Activate Membership</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #FDD835;
+            --primary-dark: #FBC02D;
+            --bg-dark: #0D1117;
+            --card-bg: #161B22;
+            --border: #30363D;
+            --text-main: #ffffff;
+            --bkash: #E2136E;
+            --nagad: #F7921E;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Background Glow */
+        body::before {
+            content: ''; position: absolute; top: -100px; left: -100px; width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(253, 216, 53, 0.15), transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+        }
+        .premium-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700, #FDB931);
+            color: #000; padding: 5px 15px; border-radius: 20px;
+            font-size: 12px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 10px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+        p.subtitle { font-size: 13px; color: #8B949E; margin-bottom: 25px; }
+
+        /* Feature List */
+        .features { display: flex; gap: 10px; overflow-x: auto; padding: 0 20px 20px 20px; scrollbar-width: none; }
+        .feature-card {
+            min-width: 140px; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); border-radius: 15px;
+            padding: 15px; text-align: center;
+        }
+        .f-icon { font-size: 24px; color: var(--primary); margin-bottom: 8px; }
+        .f-text { font-size: 12px; font-weight: 500; }
+
+        /* Price Card */
+        .price-card {
+            margin: 10px 20px 25px 20px;
+            background: linear-gradient(135deg, rgba(253, 216, 53, 0.1), rgba(0,0,0,0));
+            border: 1px solid var(--primary);
+            border-radius: 18px; padding: 25px;
+            text-align: center; position: relative; overflow: hidden;
+        }
+        .price-amount { font-size: 36px; font-weight: 800; color: var(--primary); }
+        .price-tag { font-size: 14px; color: #ccc; }
+
+        /* Payment Methods */
+        .pay-methods { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
+        .pm-btn {
+            width: 60px; height: 60px; border-radius: 12px;
+            border: 2px solid var(--border); background: var(--card-bg);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s; grayscale: 100%;
+        }
+        .pm-btn img { width: 40px; height: 40px; object-fit: contain; }
+        .pm-btn.active { border-color: var(--primary); filter: grayscale(0); transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        /* Payment Details Box */
+        .pay-details {
+            background: var(--card-bg); margin: 0 20px;
+            padding: 20px; border-radius: 15px; border: 1px solid var(--border);
+        }
+        .copy-box {
+            background: #000; padding: 12px; border-radius: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 10px 0; border: 1px dashed #444;
+        }
+        .number-text { font-family: monospace; font-size: 18px; letter-spacing: 1px; color: var(--primary); }
+        .copy-btn { color: #888; cursor: pointer; padding: 5px; }
+        .instruction { font-size: 11px; color: #888; line-height: 1.5; }
+
+        /* Form */
+        .input-group { margin-top: 20px; }
+        .form-label { font-size: 12px; margin-bottom: 8px; display: block; color: #ccc; }
+        .form-control {
+            width: 100%; background: #0D1117; border: 1px solid var(--border);
+            padding: 15px; border-radius: 12px; color: #fff; outline: none;
+            font-size: 14px; transition: 0.3s;
+        }
+        .form-control:focus { border-color: var(--primary); }
+
+        /* Submit Button */
+        .btn-submit {
+            margin: 30px 20px;
+            background: var(--primary); color: #000;
+            border: none; padding: 16px; border-radius: 14px;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 5px 20px rgba(253, 216, 53, 0.3);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-submit:disabled { background: #333; color: #666; box-shadow: none; }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(30,30,30,0.9); padding: 12px 20px; border-radius: 30px;
+            font-size: 12px; z-index: 100; opacity: 0; transition: 0.3s; pointer-events: none;
+            border: 1px solid var(--primary);
+        }
+        .toast.show { opacity: 1; top: 30px; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast"><i class="fas fa-check-circle"></i> সফলভাবে কপি হয়েছে</div>
+
+    <div class="header">
+        <div class="premium-badge"><i class="fas fa-crown"></i> Premium Access</div>
+        <h1>মেম্বারশিপ একটিভ করুন</h1>
+        <p class="subtitle">ড্রপশিপিং শুরু করতে লাইফটাইম মেম্বারশিপ নিন</p>
+    </div>
+
+    <div class="features">
+        <div class="feature-card">
+            <i class="fas fa-box-open f-icon"></i>
+            <div class="f-text">Unlimited Products</div>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-headset f-icon"></i>
+            <div class="f-text">24/7 Premium Support</div>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-shipping-fast f-icon"></i>
+            <div class="f-text">Fast Delivery</div>
+        </div>
+    </div>
+
+    <div class="price-card">
+        <div class="price-tag">One Time Fee</div>
+        <div class="price-amount">৳ ৫০০</div>
+        <div style="font-size: 10px; color: #666; margin-top: 5px;">*Non-refundable</div>
+    </div>
+
+    <div class="pay-methods">
+        <div class="pm-btn active" onclick="selectMethod('bkash', '017XXXXXXXX')">
+            <img src="https://i.ibb.co/5j0201S/bkash.png" alt="bKash">
+        </div>
+        <div class="pm-btn" onclick="selectMethod('nagad', '018XXXXXXXX')">
+            <img src="https://i.ibb.co/vzFx1z2/nagad.png" alt="Nagad">
+        </div>
+        <div class="pm-btn" onclick="selectMethod('rocket', '019XXXXXXXX')">
+            <img src="https://i.ibb.co/pW4m4zP/rocket.png" alt="Rocket">
+        </div>
+    </div>
+
+    <div class="pay-details">
+        <div class="instruction">
+            নিচের নাম্বারে <strong style="color:white">Send Money</strong> করুন। এরপর TrxID এবং আপনার নাম্বার দিয়ে সাবমিট করুন।
+        </div>
+        
+        <div class="copy-box">
+            <span class="number-text" id="payNumber">017XXXXXXXX</span>
+            <i class="far fa-copy copy-btn" onclick="copyNumber()"></i>
+        </div>
+
+        <div class="input-group">
+            <label class="form-label">যে নাম্বার থেকে টাকা পাঠিয়েছেন</label>
+            <input type="number" id="senderPhone" class="form-control" placeholder="017xxxxxxxx">
+        </div>
+
+        <div class="input-group" style="margin-top: 15px;">
+            <label class="form-label">Transaction ID (TrxID)</label>
+            <input type="text" id="trxId" class="form-control" placeholder="Ex: 8H7S6D...">
+        </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitActivation()" id="submitBtn">
+        <span>রিকোয়েস্ট সাবমিট করুন</span> <i class="fas fa-arrow-right"></i>
+    </button>
+
+    <script>
+        // --- CONFIG ---
+        // (একই কনফিগারেশন ব্যবহার করবেন যা home.html এ ছিল)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2yM6GXC2kZMEEMYjdsveDpDHfKzriq0I",
+            authDomain: "nahid-fa459.firebaseapp.com",
+            projectId: "nahid-fa459",
+            storageBucket: "nahid-fa459.firebasestorage.app",
+            messagingSenderId: "970994023392",
+            appId: "1:970994023392:web:571332949894edcf4d0985"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let selectedMethod = 'bkash';
+        let currentUser = null;
+
+        window.onload = () => {
+            // Telegram User Data
+            if(tg.initDataUnsafe.user) {
+                currentUser = tg.initDataUnsafe.user;
+            } else {
+                // Testing purpose
+                currentUser = { id: '12345', first_name: 'TestUser' };
+            }
+        };
+
+        // --- Functions ---
+
+        function selectMethod(method, number) {
+            selectedMethod = method;
+            document.getElementById('payNumber').innerText = number;
+            
+            // Visual Update
+            document.querySelectorAll('.pm-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function copyNumber() {
+            const num = document.getElementById('payNumber').innerText;
+            navigator.clipboard.writeText(num);
+            showToast("নাম্বার কপি হয়েছে!");
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        async function submitActivation() {
+            const phone = document.getElementById('senderPhone').value;
+            const trx = document.getElementById('trxId').value;
+            const btn = document.getElementById('submitBtn');
+
+            if(phone.length < 11 || trx.length < 5) {
+                tg.showAlert("দয়া করে সঠিক তথ্য দিন।");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> প্রসেসিং...`;
+
+            try {
+                await db.collection('deposits').add({
+                    userId: String(currentUser.id),
+                    userName: currentUser.first_name,
+                    amount: 500,
+                    method: selectedMethod,
+                    senderPhone: phone,
+                    trxId: trx,
+                    status: 'pending', // Admin will change this to 'approved'
+                    date: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                tg.showAlert("আপনার রিকোয়েস্ট জমা হয়েছে! এডমিন চেক করে এপ্রুভ করবেন।");
+                
+                // Reset Form
+                document.getElementById('senderPhone').value = "";
+                document.getElementById('trxId').value = "";
+                
+                // Redirect back to Home after 2 seconds
+                setTimeout(() => {
+                    window.location.href = 'home.html'; 
+                }, 2000);
+
+            } catch(e) {
+                console.error(e);
+                tg.showAlert("নেটওয়ার্ক এরর! আবার চেষ্টা করুন।");
+                btn.disabled = false;
+                btn.innerHTML = `<span>রিকোয়েস্ট সাবমিট করুন</span> <i class="fas fa-arrow-right"></i>`;
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+    </script>
+</body>
+</html>
