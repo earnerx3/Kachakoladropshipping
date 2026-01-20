@@ -109,12 +109,13 @@
         .p-price { font-size: 15px; font-weight: 700; color: var(--primary); }
         .p-copy { font-size: 12px; color: #888; padding: 5px; cursor: pointer; }
 
-        /* --- TOOLS GRID STYLE (NEW) --- */
+        /* --- TOOLS GRID STYLE --- */
         .tools-grid-4 {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 4 items per row */
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             padding: 5px;
+            margin-bottom: 25px;
         }
         .tool-item {
             display: flex;
@@ -148,6 +149,70 @@
             -webkit-box-orient: vertical;
         }
 
+        /* --- NEW SERVICE CARD STYLE (BANNER TYPE) --- */
+        .service-card {
+            background: #fff; /* White bg for contrast as per image, or use dark if preferred */
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+        }
+        /* Dark mode override for service card to match app */
+        .service-card.dark-theme {
+            background: #151a21;
+            border-color: #333;
+        }
+        .svc-header {
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            background: #f5f5f5;
+            border-bottom: 1px solid #eee;
+        }
+        .service-card.dark-theme .svc-header {
+            background: #1f2630;
+            color: #eee;
+            border-color: #333;
+        }
+        .svc-banner-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            aspect-ratio: 16/9; /* Video ratio */
+            object-fit: cover;
+        }
+        .svc-footer {
+            padding: 10px;
+        }
+        .svc-price {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .service-card.dark-theme .svc-price { color: #aaa; }
+        
+        .svc-btn {
+            width: 100%;
+            padding: 10px;
+            background: #00C853; /* Green color like the image */
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .svc-btn:active { transform: scale(0.98); background: #00E676; }
+
         /* --- DASHBOARD STATS --- */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .stat-card {
@@ -158,6 +223,30 @@
         .stat-card i { font-size: 20px; margin-bottom: 8px; }
         .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .stat-value { font-size: 18px; font-weight: 700; color: #fff; margin-top: 2px; }
+
+        /* --- INSTRUCTION TEXT STYLE --- */
+        .instruct-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 3px solid var(--primary);
+        }
+        .instruct-title {
+            color: #FF8A80;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .instruct-text {
+            color: #d1d5db;
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: justify;
+        }
 
         /* --- SKELETON LOADER --- */
         .skeleton { background: linear-gradient(90deg, #111 25%, #1a1f26 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
@@ -320,7 +409,7 @@
             <div id="ds-active-view" class="hidden">
                 <h3 style="margin-bottom:15px;">Business Dashboard</h3>
                 
-                <!-- Detailed Stats Grid (Admin Controlled) -->
+                <!-- Detailed Stats Grid -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <i class="fas fa-shopping-bag text-gold"></i>
@@ -361,38 +450,92 @@
             </div>
         </div>
 
-        <!-- TOOLS TAB (UPDATED AS REQUESTED) -->
+        <!-- TOOLS TAB (UPDATED WITH BANNER SECTION) -->
         <div id="view-tools" class="view-section">
-            <h3 style="margin-bottom:20px; text-align:center;">All Tools & Services</h3>
+            <h3 style="margin-bottom:15px; text-align:center;">All Tools</h3>
             
+            <!-- Grid Buttons (As before) -->
             <div class="tools-grid-4" id="toolsGridContainer">
-                <!-- Loading State -->
                 <div style="grid-column: span 4; text-align: center; color: #555;">
                     <div class="spinner" style="margin: 0 auto;"></div>
                 </div>
             </div>
             
-            <div style="text-align:center; font-size:11px; color:#555; margin-top:20px;">
-                * টুলস ব্যবহার করতে আইকনে ট্যাপ করুন
+            <!-- NEW: Premium Services / Banner Section -->
+            <h3 style="margin-top:25px; margin-bottom:15px; padding-left:10px; border-left:3px solid var(--success); font-size:16px;">
+                Premium Services
+            </h3>
+            
+            <div id="services-list" style="padding-bottom:20px;">
+                <!-- Dynamic Content Will Load Here -->
+                <div class="skeleton" style="height:200px; width:100%; margin-bottom:15px;"></div>
             </div>
         </div>
 
         <!-- PRINT TAB -->
         <div id="view-print" class="view-section">
             <div style="text-align:center; margin-bottom:20px;">
-                <h2 style="color:var(--primary); font-weight:700;">Custom Print</h2>
-                <p style="font-size:12px; color:#888;">Design your own t-shirt & gadgets</p>
+                <h2 style="color:var(--primary); font-weight:700; font-size: 22px;">Custom Print</h2>
+                <div style="display:inline-block; border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-top: 10px; font-weight: bold; font-size: 16px; color: #fff;">
+                    ==নির্দেশনাবলী==
+                </div>
             </div>
             
-            <!-- Instructions Cards -->
-            <div class="glass-card" style="padding:15px; margin-bottom:10px;">
-                <div style="color:#FF4081; font-weight:700; margin-bottom:5px;">⚠️ অর্ডার প্রসেস</div>
-                <div style="font-size:13px; color:#ccc;">আপনার পছন্দ মত যেকোনো ডিজাইন, লোগো দিয়ে সর্বনিম্ন ১ পিস অর্ডার করতে পারবেন।</div>
+            <!-- Instructions List -->
+            <div class="instruct-card">
+                <div class="instruct-title"><i class="fas fa-edit"></i> অর্ডার প্রসেস>></div>
+                <div class="instruct-text">
+                    আপনার পছন্দ মত যেকোনো ডিজাইন, ছবি, লোগো এবং নাম দিয়ে ডিজাইন করে অর্ডার প্লেস করতে পারবেন। সর্বনিম্ন ১ পিস ও অর্ডার করতে পারবেন।
+                </div>
+            </div>
+
+            <div class="instruct-card">
+                <div class="instruct-title"><i class="fas fa-money-bill-wave"></i> পেমেন্ট এন্ড রিটার্ন>></div>
+                <div class="instruct-text">
+                    যেহেতু আপনার নাম বা ডিজাইন দিয়ে প্রিন্ট হবে, তাই পরবর্তীতে এই প্রোডাক্ট অন্য কারো কাছে সেল হবে না। তাই ফুল পেমেন্ট করে অর্ডার করতে হবে এবং প্রোডাক্টের ত্রুটি না থাকলে রিটার্ন হবে না।
+                </div>
+            </div>
+
+            <div class="instruct-card">
+                <div class="instruct-title"><i class="fas fa-shipping-fast"></i> ডেলিভারির সময়>></div>
+                <div class="instruct-text">
+                    যেহেতু কাস্টম প্রিন্ট, তাই ন্যূনতম ৩-৫ দিন সময় নিবেন, ধীরে ধীরে আরও ফাস্ট ডেলিভারি করা হবে।
+                </div>
+            </div>
+
+            <div class="instruct-card">
+                <div class="instruct-title"><i class="fas fa-chart-line"></i> প্রাইস এন্ড প্রফিট>></div>
+                <div class="instruct-text">
+                    অ্যাপসে অ্যাডমিন প্রাইস দেওয়া আছে, এর উপরে যত টাকা বেশি সেল করবেন সেটা আপনার প্রফিট। আপনার প্রফিটের টাকা আপনার কাছে রেখে অ্যাডমিন প্রাইস পেমেন্ট করে অর্ডার প্লেস করবেন।
+                </div>
+            </div>
+
+            <div class="instruct-card">
+                <div class="instruct-title"><i class="fas fa-box"></i> কুরিয়ারে বুকিং>></div>
+                <div class="instruct-text">
+                    আপনারা চাইলে সরাসরি আপনাদের নিজস্ব কুরিয়ার প্যানেল থেকে বুকিং দিয়ে পার্সেল পাঠাতে পারবেন। সেক্ষেত্রে অর্ডার নোটে পার্সেল আইডি দিয়ে দিলে আমরা কুরিয়ারে প্রোডাক্ট পৌঁছে দেব।
+                </div>
+            </div>
+
+            <div class="instruct-card">
+                <div class="instruct-title"><i class="fas fa-tshirt"></i> প্রোডাক্ট এন্ড ডিজাইন>></div>
+                <div class="instruct-text">
+                    আপাতত টি শার্ট এবং হুডি দিয়ে শুরু করা হল। ধীরে ধীরে সকল ধরনের প্রোডাক্ট চলে আসবে। এবং ডিজাইন আরও সহজে করার জন্য প্রয়োজনীয় সিস্টেম আপডেট করা হবে।
+                </div>
+            </div>
+
+            <div class="instruct-card">
+                <div class="instruct-title"><i class="fas fa-video"></i> টিউটোরিয়াল ভিডিও>></div>
+                <div class="instruct-text">
+                    খুব দ্রুতই প্রয়োজনীয় সকল টিউটোরিয়াল ভিডিও প্রোভাইড করা হবে।
+                </div>
             </div>
             
-            <button class="btn-primary" onclick="openCustomLink()" style="margin-top:20px; background: linear-gradient(45deg, #FF6F00, #FDD835);">
-                <i class="fas fa-palette"></i> কাস্টমাইজ শুরু করুন
-            </button>
+            <div style="padding-bottom: 20px;">
+                <button class="btn-primary" onclick="openCustomLink()" style="background: linear-gradient(45deg, #FF6F00, #FDD835); color: #000; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    কাস্টমাইজ করুন <i class="fas fa-angle-double-right"></i>
+                </button>
+            </div>
         </div>
 
         <!-- PROFILE TAB -->
@@ -485,9 +628,9 @@
         let userStatus = 'inactive';
         let appSettings = { fee: 500, bkash: "", nagad: "", customPrintLink: "" };
         let allProducts = [];
-        let toolLinks = {}; // To store links from DB
+        let toolLinks = {};
 
-        // --- NEW STATIC TOOLS DATA (FROM YOUR IMAGE) ---
+        // --- STATIC TOOLS DATA ---
         const staticTools = [
             { id: 't1', title: 'ফ্রিল্যান্সিং মার্কেটপ্লেস', icon: 'fa-store', color: '#4DB6AC' },
             { id: 't2', title: 'মোবাইল রিচার্জ', icon: 'fa-mobile-alt', color: '#FF8A65' },
@@ -528,8 +671,11 @@
                 renderProducts(allProducts);
             });
 
-            // Load Tools Links (New Logic)
+            // Load Tools Grid Links
             db.collection('tools').onSnapshot(renderTools);
+
+            // Load Banner Services (NEW)
+            db.collection('services').onSnapshot(renderServices);
 
             // Auth Logic
             if(tg.initDataUnsafe?.user) {
@@ -658,12 +804,10 @@
             }
         }
 
-        // --- RENDER TOOLS (STATIC GRID + DYNAMIC LINKS) ---
+        // --- RENDER TOOLS (GRID) ---
         function renderTools(snap) {
-            // Update local link cache from Firestore
             if(!snap.empty) {
                 snap.forEach(doc => {
-                    // Assuming doc.id matches staticTools ID (e.g. 't1') or has a 'toolId' field
                     const data = doc.data();
                     const key = doc.id; 
                     if(data.link) toolLinks[key] = data.link;
@@ -673,7 +817,6 @@
             const container = document.getElementById('toolsGridContainer');
             container.innerHTML = '';
 
-            // Loop through the STATIC list to ensure layout matches image
             staticTools.forEach(tool => {
                 const html = `
                     <div class="tool-item" onclick="openToolLink('${tool.id}')">
@@ -687,18 +830,42 @@
             });
         }
 
-        // Handle Tool Click
         function openToolLink(toolId) {
-            // Check if link exists in DB cache
             if(toolLinks[toolId]) {
                 tg.openLink(toolLinks[toolId]);
             } else {
-                // Fallback or message
                 showToast("Service coming soon! 🛠️");
-                // For testing/demo, console log:
-                console.log(`Open tool: ${toolId} - No link set in DB (tools/${toolId})`);
             }
         }
+
+        // --- RENDER SERVICES (BANNER LIST - NEW) ---
+        function renderServices(snap) {
+            const container = document.getElementById('services-list');
+            container.innerHTML = '';
+
+            if (snap.empty) {
+                container.innerHTML = '<div style="text-align:center; color:#555;">No services available</div>';
+                return;
+            }
+
+            snap.forEach(doc => {
+                const d = doc.data();
+                const html = `
+                    <div class="service-card dark-theme">
+                        <div class="svc-header">
+                            <i class="fas fa-crown text-gold"></i> ${d.title || 'Premium Service'}
+                        </div>
+                        <img src="${d.image || 'https://placehold.co/600x340/222/FFF?text=Service'}" class="svc-banner-img">
+                        <div class="svc-footer">
+                            ${d.price ? `<div class="svc-price"><i class="fas fa-tag"></i> TK ${d.price}</div>` : ''}
+                            <button class="svc-btn" onclick="handleLink('${d.link}')">Service details <i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
 
         // --- PAYMENT & UTILS ---
         window.openPaymentModal = () => {
