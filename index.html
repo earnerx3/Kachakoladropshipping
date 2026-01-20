@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kacha Kola Dropshipping Premium</title>
+    
+    <!-- Telegram & Firebase SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-body: #05090e;
+            --bg-card: rgba(255, 255, 255, 0.05); /* Glass Effect Base */
+            --bg-glass: rgba(5, 9, 14, 0.9);
+            --primary: #FDD835; /* Banana Yellow/Gold */
+            --primary-dark: #FBC02D;
+            --primary-glow: rgba(253, 216, 53, 0.3);
+            --text-main: #ffffff;
+            --text-muted: #8B949E;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #00E676;
+            --danger: #FF5252;
+            --nav-height: 75px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--bg-body); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+        /* --- PRELOADER --- */
+        #preloader {
+            position: fixed; inset: 0; background: var(--bg-body); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        .loader-icon { font-size: 45px; color: var(--primary); animation: pulse-gold 1.5s infinite; margin-bottom: 15px; }
+        .spinner {
+            width: 30px; height: 30px; border: 3px solid rgba(253, 216, 53, 0.2);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- UTILITIES --- */
+        .hidden { display: none !important; }
+        .text-gold { color: var(--primary); }
+        .glass-card {
+            background: var(--bg-card); backdrop-filter: blur(10px);
+            border: 1px solid var(--border); border-radius: 16px;
+        }
+
+        /* --- SCROLL CONTENT --- */
+        #main-content {
+            flex: 1; overflow-y: auto; padding-bottom: 100px;
+            scroll-behavior: smooth;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            padding: 15px 20px; background: rgba(5, 9, 14, 0.85); backdrop-filter: blur(15px);
+            position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .app-logo { font-size: 20px; font-weight: 700; color: var(--primary); letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+        
+        /* --- VIEW SECTIONS --- */
+        .view-section { display: none; padding: 20px 15px; animation: fadeIn 0.4s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-gold { 0% { text-shadow: 0 0 0 rgba(253, 216, 53, 0); } 50% { text-shadow: 0 0 20px rgba(253, 216, 53, 0.5); } 100% { text-shadow: 0 0 0 rgba(253, 216, 53, 0); } }
+
+        /* --- BANNER SLIDER --- */
+        .banner-container {
+            width: 100%; height: 160px; border-radius: 16px; overflow: hidden;
+            margin-bottom: 20px; position: relative; border: 1px solid var(--border);
+        }
+        .banner-slide {
+            width: 100%; height: 100%; object-fit: cover; display: none;
+            animation: fadeIn 1s;
+        }
+        .banner-slide.active { display: block; }
+
+        /* --- CATEGORY CHIPS --- */
+        .cat-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
+        .cat-chip {
+            background: #1A1F26; color: #ccc; padding: 8px 16px; border-radius: 50px;
+            font-size: 13px; white-space: nowrap; border: 1px solid var(--border); transition: 0.3s;
+        }
+        .cat-chip.active { background: var(--primary); color: #000; font-weight: 700; border-color: var(--primary); }
+
+        /* --- PRODUCT GRID --- */
+        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .product-card {
+            background: #11161d; border-radius: 14px; overflow: hidden;
+            border: 1px solid var(--border); transition: 0.3s; position: relative;
+        }
+        .product-card:active { transform: scale(0.98); }
+        .p-img { width: 100%; height: 140px; background: #1a1f26; object-fit: cover; }
+        .p-info { padding: 10px; }
+        .p-title { font-size: 13px; font-weight: 500; margin-bottom: 6px; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-meta { display: flex; justify-content: space-between; align-items: center; }
+        .p-price { font-size: 15px; font-weight: 700; color: var(--primary); }
+        .p-copy { font-size: 12px; color: #888; padding: 5px; cursor: pointer; }
+
+        /* --- SKELETON LOADER --- */
+        .skeleton { background: linear-gradient(90deg, #111 25%, #1a1f26 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .sk-banner { height: 160px; width: 100%; margin-bottom: 20px; border-radius: 16px; }
+        .sk-card { height: 200px; width: 100%; border-radius: 14px; }
+
+        /* --- DASHBOARD STATS (NEW PREMIUM) --- */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-card {
+            padding: 15px; border-radius: 14px; border: 1px solid var(--border);
+            display: flex; flex-direction: column; justify-content: center;
+            background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+        }
+        .stat-card i { font-size: 20px; margin-bottom: 8px; }
+        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 18px; font-weight: 700; color: #fff; margin-top: 2px; }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: var(--bg-glass); backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center; z-index: 100;
+            padding-bottom: 10px;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: var(--text-muted); font-size: 10px; cursor: pointer; transition: 0.3s;
+            width: 20%; padding-top: 10px; position: relative;
+        }
+        .nav-item i { font-size: 20px; margin-bottom: 5px; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active i { transform: translateY(-5px); text-shadow: 0 5px 15px var(--primary-glow); }
+        .nav-item.active::after {
+            content: ''; position: absolute; bottom: 10px; width: 5px; height: 5px;
+            background: var(--primary); border-radius: 50%;
+        }
+
+        /* --- MODALS & EXTRAS --- */
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000;
+            display: none; align-items: flex-end; backdrop-filter: blur(5px);
+        }
+        .overlay.show { display: flex; }
+        .modal-sheet {
+            background: #151a21; width: 100%; border-radius: 24px 24px 0 0;
+            padding: 25px; max-height: 85vh; overflow-y: auto; border-top: 1px solid var(--primary);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .btn-primary {
+            width: 100%; padding: 15px; background: var(--primary); color: #000;
+            border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(253, 216, 53, 0.2);
+        }
+        .input-field {
+            width: 100%; background: #0a0d11; border: 1px solid var(--border);
+            padding: 14px; border-radius: 12px; color: #fff; outline: none; margin-bottom: 15px;
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #222; border: 1px solid var(--primary); color: #fff;
+            padding: 10px 25px; border-radius: 30px; font-size: 13px;
+            z-index: 2000; display: none; box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        
+        /* Lock Overlay */
+        .lock-overlay {
+            background: rgba(17, 22, 29, 0.7); border: 1px dashed var(--border);
+            border-radius: 16px; padding: 40px 20px; text-align: center;
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- GLOBAL PRELOADER -->
+    <div id="preloader">
+        <div class="loader-icon"><i class="fas fa-leaf"></i></div>
+        <div class="spinner"></div>
+        <div style="margin-top: 15px; color: #666; font-size: 12px; letter-spacing: 2px;">LOADING...</div>
+    </div>
+
+    <div class="header">
+        <div class="app-logo"><i class="fas fa-leaf"></i> Kacha Kola <span style="font-size:10px; background:#222; padding:2px 6px; border-radius:4px; margin-left:5px; color:var(--text-muted);">PRO</span></div>
+        <div id="balanceDisplay" style="font-size:14px; font-weight:700; color:var(--success); background:rgba(0,230,118,0.1); padding:5px 10px; border-radius:8px;">৳ 0.00</div>
+    </div>
+
+    <div id="main-content">
+        
+        <!-- HOME TAB -->
+        <div id="view-home" class="view-section active">
+            
+            <!-- Banner Slider -->
+            <div class="banner-container">
+                <div id="bannerPlaceholder" class="skeleton sk-banner"></div>
+                <!-- Images will be injected here -->
+                <img src="https://placehold.co/600x300/111/FFF?text=Exclusive+Offer" class="banner-slide active">
+                <img src="https://placehold.co/600x300/222/FFF?text=New+Collection" class="banner-slide">
+                <img src="https://placehold.co/600x300/333/FFF?text=Best+Quality" class="banner-slide">
+            </div>
+
+            <!-- Category Filter -->
+            <div class="cat-scroll">
+                <div class="cat-chip active" onclick="filterCategory('all', this)">All</div>
+                <div class="cat-chip" onclick="filterCategory('gadget', this)">Gadgets</div>
+                <div class="cat-chip" onclick="filterCategory('fashion', this)">Fashion</div>
+                <div class="cat-chip" onclick="filterCategory('watch', this)">Watches</div>
+            </div>
+
+            <h3 style="margin-bottom:15px; font-size:16px; display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-fire text-gold"></i> Hot Deals
+            </h3>
+            
+            <div id="home-active-content">
+                <div class="product-grid" id="productContainer">
+                    <!-- Skeleton Loading State -->
+                    <div class="skeleton sk-card"></div>
+                    <div class="skeleton sk-card"></div>
+                    <div class="skeleton sk-card"></div>
+                    <div class="skeleton sk-card"></div>
+                </div>
+            </div>
+
+            <div id="home-locked-content" class="hidden" style="margin-top:20px;">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock" style="font-size:40px; color:var(--text-muted); margin-bottom:15px;"></i>
+                    <h2 style="font-size:18px; margin-bottom:5px; color:#fff;">Access Restricted</h2>
+                    <p style="color:var(--text-muted); font-size:13px; margin-bottom:20px;">
+                        প্রোডাক্ট দেখতে এবং অর্ডার করতে বিজনেস অ্যাকাউন্ট একটিভ করুন।
+                    </p>
+                    <button class="btn-primary" onclick="switchTab('dropshipping')" style="width:auto; padding: 10px 30px; font-size:14px;">Unlock Now</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DROPSHIPPING (BUSINESS) TAB -->
+        <div id="view-dropshipping" class="view-section">
+            
+            <!-- Notice Board -->
+            <div class="glass-card" style="padding:15px; margin-bottom:20px;">
+                <div style="font-size:14px; color:var(--primary); font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-bullhorn"></i> Admin Notice
+                </div>
+                <div style="font-size:13px; color:#eee; line-height:1.5;" id="noticeText">
+                    Welcome to Kacha Kola Premium Dropshipping.
+                </div>
+            </div>
+
+            <div id="ds-inactive-view" class="hidden">
+                <div class="lock-overlay">
+                    <i class="fas fa-briefcase" style="font-size:40px; color:var(--primary); margin-bottom:15px;"></i>
+                    <h2 style="font-size:20px; margin-bottom:10px;">Start Your Business</h2>
+                    <p style="color:var(--text-muted); font-size:13px; margin-bottom:20px;">
+                        মেম্বারশিপ ফি প্রদান করে একাউন্ট একটিভ করুন এবং আনলিমিটেড ইনকাম শুরু করুন।
+                    </p>
+                    <button class="btn-primary" onclick="openPaymentModal()">Activate Membership</button>
+                </div>
+            </div>
+            
+            <div id="ds-pending-view" class="hidden lock-overlay" style="border-color:orange;">
+                <i class="fas fa-clock" style="font-size:40px; color:orange; margin-bottom:15px;"></i>
+                <h2>Request Pending</h2>
+                <p style="color:#aaa;">আপনার পেমেন্ট যাচাই করা হচ্ছে। অনুগ্রহ করে অপেক্ষা করুন।</p>
+            </div>
+
+            <div id="ds-active-view" class="hidden">
+                <h3 style="margin-bottom:15px;">Business Dashboard</h3>
+                
+                <!-- Detailed Stats Grid (Admin Controlled) -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-shopping-bag text-gold"></i>
+                        <span class="stat-label">Total Sales</span>
+                        <span class="stat-value" id="statSales">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-wallet" style="color:#00E676;"></i>
+                        <span class="stat-label">Net Profit</span>
+                        <span class="stat-value" id="statEarnings">৳ 0</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-hourglass-half" style="color:#FF9800;"></i>
+                        <span class="stat-label">Pending</span>
+                        <span class="stat-value" id="statPending">৳ 0</span>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-check-circle" style="color:#29B6F6;"></i>
+                        <span class="stat-label">Withdrawn</span>
+                        <span class="stat-value" id="statWithdrawn">৳ 0</span>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:12px; color:#888;">Available to Withdraw</div>
+                        <div style="font-size:20px; font-weight:700; color:var(--primary);" id="withdrawBalance">৳ 0.00</div>
+                    </div>
+                    <button style="background:#333; color:#fff; border:1px solid #555; padding:8px 15px; border-radius:8px;" onclick="showToast('Withdrawal feature coming soon!')">Withdraw</button>
+                </div>
+
+                <div style="margin-top:25px;">
+                     <h4 style="margin-bottom:10px;">Training</h4>
+                     <div style="width:100%; height:180px; background:#000; border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border);">
+                        <span style="color:#555;">Video Player Area</span>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOOLS TAB -->
+        <div id="view-tools" class="view-section">
+            <h3 style="margin-bottom:20px; text-align:center;">Tools & Services</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;" id="toolsGridContainer">
+                <div style="grid-column: span 2; text-align: center; color: #555;">Loading Tools...</div>
+            </div>
+        </div>
+
+        <!-- PRINT TAB -->
+        <div id="view-print" class="view-section">
+            <div style="text-align:center; margin-bottom:20px;">
+                <h2 style="color:var(--primary); font-weight:700;">Custom Print</h2>
+                <p style="font-size:12px; color:#888;">Design your own t-shirt & gadgets</p>
+            </div>
+            
+            <!-- Instructions Cards -->
+            <div class="glass-card" style="padding:15px; margin-bottom:10px;">
+                <div style="color:#FF4081; font-weight:700; margin-bottom:5px;">⚠️ অর্ডার প্রসেস</div>
+                <div style="font-size:13px; color:#ccc;">আপনার পছন্দ মত যেকোনো ডিজাইন, লোগো দিয়ে সর্বনিম্ন ১ পিস অর্ডার করতে পারবেন।</div>
+            </div>
+            
+            <button class="btn-primary" onclick="openCustomLink()" style="margin-top:20px; background: linear-gradient(45deg, #FF6F00, #FDD835);">
+                <i class="fas fa-palette"></i> কাস্টমাইজ শুরু করুন
+            </button>
+        </div>
+
+        <!-- PROFILE TAB -->
+        <div id="view-profile" class="view-section">
+            <div style="text-align:center; margin-bottom:30px; margin-top:20px;">
+                <img src="https://placehold.co/100" id="userAvatar" style="width:90px; height:90px; border-radius:50%; border:3px solid var(--primary); object-fit:cover;">
+                <h2 id="userNameDisplay" style="margin-top:10px;">Guest User</h2>
+                <div style="font-size:12px; color:#777; margin-bottom:10px;">ID: <span id="userIdDisplay">...</span></div>
+                <span id="statusBadge" style="background:#222; padding:5px 15px; border-radius:20px; font-size:11px; border:1px solid #333;">Inactive</span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <div class="glass-card" style="padding:15px; display:flex; justify-content:space-between;" onclick="openReferralModal()">
+                    <span><i class="fas fa-users" style="color:#29B6F6; width:25px;"></i> My Referrals</span>
+                    <i class="fas fa-chevron-right" style="color:#555;"></i>
+                </div>
+                <div class="glass-card" style="padding:15px; display:flex; justify-content:space-between;" onclick="copyUserID()">
+                    <span><i class="fas fa-copy" style="color:#AB47BC; width:25px;"></i> Copy User ID</span>
+                    <i class="fas fa-chevron-right" style="color:#555;"></i>
+                </div>
+                <div class="glass-card" style="padding:15px; display:flex; justify-content:space-between;" onclick="Telegram.WebApp.openLink('https://t.me/KachaKolaSupport')">
+                    <span><i class="fas fa-headset" style="color:#00E676; width:25px;"></i> Help & Support</span>
+                    <i class="fas fa-chevron-right" style="color:#555;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')"><i class="fas fa-home"></i>Home</div>
+        <div class="nav-item" onclick="switchTab('dropshipping')"><i class="fas fa-chart-line"></i>Business</div>
+        <div class="nav-item" onclick="switchTab('tools')"><i class="fas fa-th-large"></i>Tools</div>
+        <div class="nav-item" onclick="switchTab('print')"><i class="fas fa-tshirt"></i>Print</div>
+        <div class="nav-item" onclick="switchTab('profile')"><i class="fas fa-user"></i>Profile</div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="paymentModal" class="overlay">
+        <div class="modal-sheet">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>Active Membership</h3>
+                <i class="fas fa-times" onclick="closePaymentModal()" style="cursor:pointer;"></i>
+            </div>
+            
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="font-size:35px; font-weight:700; color:var(--primary);">৳ <span id="payAmountDisplay">500</span></div>
+                <div style="color:#777; font-size:13px;">Lifetime Access Fee</div>
+            </div>
+
+            <select id="payMethod" class="input-field" onchange="updatePaymentInfo()">
+                <option value="">Select Method...</option>
+                <option value="bkash">bKash (Send Money)</option>
+                <option value="nagad">Nagad (Send Money)</option>
+            </select>
+
+            <div id="adminNumBox" class="hidden" style="background:#222; padding:15px; border-radius:10px; text-align:center; margin-bottom:15px; border:1px dashed var(--primary);">
+                <span style="font-size:12px; color:#aaa;">Send Money To:</span>
+                <div id="adminNumberText" style="font-size:20px; font-weight:bold; color:#fff; cursor:pointer;" onclick="copyNumber()">017XXXXXXXX</div>
+                <div style="font-size:10px; color:var(--primary); margin-top:5px;">(Tap to copy)</div>
+            </div>
+
+            <input type="number" id="senderPhone" class="input-field" placeholder="Sender Number">
+            <input type="text" id="trxID" class="input-field" placeholder="Transaction ID (TrxID)">
+
+            <button class="btn-primary" onclick="confirmPayment()">Confirm Payment</button>
+        </div>
+    </div>
+
+    <div id="toast">Message</div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2yM6GXC2kZMEEMYjdsveDpDHfKzriq0I",
+            authDomain: "nahid-fa459.firebaseapp.com",
+            projectId: "nahid-fa459",
+            storageBucket: "nahid-fa459.firebasestorage.app",
+            messagingSenderId: "970994023392",
+            appId: "1:970994023392:web:571332949894edcf4d0985"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // State
+        let currentUser = null;
+        let userStatus = 'inactive';
+        let appSettings = { fee: 500, bkash: "", nagad: "", customPrintLink: "" };
+        let allProducts = [];
+
+        // --- INIT ---
+        window.onload = async () => {
+            // Remove Preloader after a delay
+            setTimeout(() => {
+                document.getElementById('preloader').style.opacity = '0';
+                setTimeout(() => document.getElementById('preloader').style.display = 'none', 500);
+            }, 1500);
+
+            // Banner Rotation Logic
+            startBannerRotation();
+
+            // Load Config
+            db.collection('settings').doc('config').onSnapshot(doc => {
+                if(doc.exists) {
+                    appSettings = doc.data();
+                    if(appSettings.notice) document.getElementById('noticeText').innerText = appSettings.notice;
+                }
+            });
+
+            // Load Products
+            db.collection('products').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                allProducts = [];
+                snap.forEach(doc => allProducts.push(doc.data()));
+                renderProducts(allProducts);
+            });
+
+            // Load Tools
+            db.collection('tools').onSnapshot(renderTools);
+
+            // Auth Logic
+            if(tg.initDataUnsafe?.user) {
+                currentUser = tg.initDataUnsafe.user;
+            } else {
+                currentUser = { id: 123456, first_name: "Test", last_name: "User", photo_url: "" }; // Fallback
+            }
+            initUser(currentUser);
+        };
+
+        // --- USER & DASHBOARD LOGIC ---
+        function initUser(user) {
+            document.getElementById('userNameDisplay').innerText = user.first_name;
+            document.getElementById('userIdDisplay').innerText = user.id;
+            if(user.photo_url) document.getElementById('userAvatar').src = user.photo_url;
+
+            db.collection('users').doc(String(user.id)).onSnapshot(doc => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    userStatus = data.membershipStatus || 'inactive';
+                    updateDashboard(data);
+                } else {
+                    // Create New User
+                    db.collection('users').doc(String(user.id)).set({
+                        userId: String(user.id),
+                        firstName: user.first_name,
+                        membershipStatus: 'inactive',
+                        balance: 0,
+                        totalSales: 0,
+                        pendingEarnings: 0,
+                        withdrawnEarnings: 0,
+                        joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+        }
+
+        // --- ADVANCED DASHBOARD UPDATE ---
+        // এই ফাংশনটি এডমিন প্যানেল থেকে সেট করা ডাটা লাইভ আপডেট করবে
+        function updateDashboard(data) {
+            // Stats
+            document.getElementById('balanceDisplay').innerText = `৳ ${data.balance || 0}`;
+            document.getElementById('withdrawBalance').innerText = `৳ ${data.balance || 0}`;
+            
+            // Detailed Stats from Admin
+            document.getElementById('statSales').innerText = data.totalSales || 0;
+            document.getElementById('statEarnings').innerText = `৳ ${data.totalEarnings || 0}`; // Total Profit
+            document.getElementById('statPending').innerText = `৳ ${data.pendingEarnings || 0}`;
+            document.getElementById('statWithdrawn').innerText = `৳ ${data.withdrawnEarnings || 0}`;
+
+            // Status Badge
+            const badge = document.getElementById('statusBadge');
+            badge.innerText = userStatus.toUpperCase();
+            badge.style.color = userStatus === 'active' ? '#00E676' : '#ccc';
+
+            // View Logic
+            const homeActive = document.getElementById('home-active-content');
+            const homeLocked = document.getElementById('home-locked-content');
+
+            if(userStatus === 'active') {
+                document.getElementById('ds-active-view').classList.remove('hidden');
+                document.getElementById('ds-inactive-view').classList.add('hidden');
+                document.getElementById('ds-pending-view').classList.add('hidden');
+                homeActive.classList.remove('hidden');
+                homeLocked.classList.add('hidden');
+            } else if (userStatus === 'pending') {
+                document.getElementById('ds-pending-view').classList.remove('hidden');
+                document.getElementById('ds-inactive-view').classList.add('hidden');
+                homeActive.classList.add('hidden');
+                homeLocked.classList.remove('hidden');
+            } else {
+                document.getElementById('ds-active-view').classList.add('hidden');
+                document.getElementById('ds-inactive-view').classList.remove('hidden');
+                homeActive.classList.add('hidden');
+                homeLocked.classList.remove('hidden');
+            }
+        }
+
+        // --- PRODUCT RENDER & FILTER ---
+        function renderProducts(products) {
+            const container = document.getElementById('productContainer');
+            container.innerHTML = '';
+            
+            if(products.length === 0) {
+                container.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #777;">No products found.</div>';
+                return;
+            }
+
+            products.forEach(p => {
+                const html = `
+                    <div class="product-card">
+                        <img src="${p.image}" class="p-img" onclick="handleLink('${p.link}')">
+                        <div class="p-info">
+                            <div class="p-title">${p.name}</div>
+                            <div class="p-meta">
+                                <div class="p-price">৳ ${p.price}</div>
+                                <i class="fas fa-copy p-copy" onclick="copyProduct('${p.name}', '${p.price}')"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function filterCategory(cat, el) {
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+
+            if(cat === 'all') {
+                renderProducts(allProducts);
+            } else {
+                // Simple filter based on name or a category field if available
+                const filtered = allProducts.filter(p => 
+                    (p.category && p.category.toLowerCase() === cat) || 
+                    p.name.toLowerCase().includes(cat)
+                );
+                renderProducts(filtered);
+            }
+        }
+
+        function copyProduct(name, price) {
+            navigator.clipboard.writeText(`${name}\nPrice: ${price} Tk\nOrder Now!`);
+            showToast("Details Copied! 📋");
+        }
+
+        // --- BANNER SLIDER LOGIC ---
+        function startBannerRotation() {
+            let index = 0;
+            const slides = document.querySelectorAll('.banner-slide');
+            const placeholder = document.getElementById('bannerPlaceholder');
+            
+            // Hide placeholder if images exist
+            if(slides.length > 0) {
+                placeholder.classList.add('hidden');
+                setInterval(() => {
+                    slides[index].classList.remove('active');
+                    index = (index + 1) % slides.length;
+                    slides[index].classList.add('active');
+                }, 3000);
+            }
+        }
+
+        function renderTools(snap) {
+            const container = document.getElementById('toolsGridContainer');
+            if(snap.empty) {
+                container.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #555;">Coming Soon</div>';
+                return;
+            }
+            let html = '';
+            snap.forEach(doc => {
+                const t = doc.data();
+                html += `
+                    <div class="glass-card" style="padding:15px; text-align:center;" onclick="handleLink('${t.link}')">
+                        <div style="font-size:24px; color:var(--primary); margin-bottom:8px;">${t.iconHTML || '<i class="fas fa-cube"></i>'}</div>
+                        <div style="font-size:13px; color:#fff;">${t.title}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // --- PAYMENT FUNCTIONS ---
+        window.openPaymentModal = () => {
+            document.getElementById('payAmountDisplay').innerText = appSettings.activationFee || 500;
+            document.getElementById('paymentModal').classList.add('show');
+        };
+        window.closePaymentModal = () => document.getElementById('paymentModal').classList.remove('show');
+
+        window.updatePaymentInfo = () => {
+            const method = document.getElementById('payMethod').value;
+            const numBox = document.getElementById('adminNumBox');
+            if(method) {
+                let num = method === 'bkash' ? appSettings.bkash : appSettings.nagad;
+                document.getElementById('adminNumberText').innerText = num || "Not Set";
+                numBox.classList.remove('hidden');
+            } else {
+                numBox.classList.add('hidden');
+            }
+        };
+
+        window.confirmPayment = async () => {
+            const method = document.getElementById('payMethod').value;
+            const sender = document.getElementById('senderPhone').value;
+            const trx = document.getElementById('trxID').value;
+
+            if(!method || !sender || !trx) return showToast("Please fill all fields ❌");
+
+            const btn = document.querySelector('#paymentModal .btn-primary');
+            btn.innerText = "Processing..."; btn.disabled = true;
+
+            try {
+                await db.collection('deposits').add({
+                    userId: String(currentUser.id),
+                    userName: currentUser.first_name,
+                    amount: Number(appSettings.activationFee || 500),
+                    method, sender, trxId: trx,
+                    status: 'pending',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await db.collection('users').doc(String(currentUser.id)).update({ membershipStatus: 'pending' });
+                closePaymentModal();
+                showToast("Request Sent! Wait for approval ✅");
+            } catch(e) { showToast("Error! Try again."); } 
+            finally { btn.innerText = "Confirm Payment"; btn.disabled = false; }
+        };
+
+        // --- UTILS ---
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-'+tab).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const map = {home:0, dropshipping:1, tools:2, print:3, profile:4};
+            document.querySelectorAll('.nav-item')[map[tab]].classList.add('active');
+        };
+
+        window.handleLink = (link) => link ? tg.openLink(link) : showToast("Link not valid");
+        window.openCustomLink = () => appSettings.customPrintLink ? tg.openLink(appSettings.customPrintLink) : showToast("Link not available");
+        window.copyNumber = () => { navigator.clipboard.writeText(document.getElementById('adminNumberText').innerText); showToast("Number Copied!"); };
+        window.copyUserID = () => { navigator.clipboard.writeText(String(currentUser.id)); showToast("ID Copied!"); };
+        
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+    </script>
+</body>
+</html>
