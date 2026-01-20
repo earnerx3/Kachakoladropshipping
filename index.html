@@ -17,9 +17,9 @@
     <style>
         :root {
             --bg-body: #05090e;
-            --bg-card: rgba(255, 255, 255, 0.05); /* Glass Effect Base */
+            --bg-card: rgba(255, 255, 255, 0.05);
             --bg-glass: rgba(5, 9, 14, 0.9);
-            --primary: #FDD835; /* Banana Yellow/Gold */
+            --primary: #FDD835; 
             --primary-dark: #FBC02D;
             --primary-glow: rgba(253, 216, 53, 0.3);
             --text-main: #ffffff;
@@ -109,13 +109,46 @@
         .p-price { font-size: 15px; font-weight: 700; color: var(--primary); }
         .p-copy { font-size: 12px; color: #888; padding: 5px; cursor: pointer; }
 
-        /* --- SKELETON LOADER --- */
-        .skeleton { background: linear-gradient(90deg, #111 25%, #1a1f26 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .sk-banner { height: 160px; width: 100%; margin-bottom: 20px; border-radius: 16px; }
-        .sk-card { height: 200px; width: 100%; border-radius: 14px; }
+        /* --- TOOLS GRID STYLE (NEW) --- */
+        .tools-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 items per row */
+            gap: 10px;
+            padding: 5px;
+        }
+        .tool-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 15px 5px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .tool-item:active { transform: scale(0.95); background: rgba(255,255,255,0.08); }
+        .tool-icon-box {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+        .tool-title {
+            font-size: 10px;
+            color: #ddd;
+            line-height: 1.2;
+            height: 24px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
 
-        /* --- DASHBOARD STATS (NEW PREMIUM) --- */
+        /* --- DASHBOARD STATS --- */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
         .stat-card {
             padding: 15px; border-radius: 14px; border: 1px solid var(--border);
@@ -125,6 +158,12 @@
         .stat-card i { font-size: 20px; margin-bottom: 8px; }
         .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .stat-value { font-size: 18px; font-weight: 700; color: #fff; margin-top: 2px; }
+
+        /* --- SKELETON LOADER --- */
+        .skeleton { background: linear-gradient(90deg, #111 25%, #1a1f26 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .sk-banner { height: 160px; width: 100%; margin-bottom: 20px; border-radius: 16px; }
+        .sk-card { height: 200px; width: 100%; border-radius: 14px; }
 
         /* --- BOTTOM NAV --- */
         .bottom-nav {
@@ -322,11 +361,19 @@
             </div>
         </div>
 
-        <!-- TOOLS TAB -->
+        <!-- TOOLS TAB (UPDATED AS REQUESTED) -->
         <div id="view-tools" class="view-section">
-            <h3 style="margin-bottom:20px; text-align:center;">Tools & Services</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;" id="toolsGridContainer">
-                <div style="grid-column: span 2; text-align: center; color: #555;">Loading Tools...</div>
+            <h3 style="margin-bottom:20px; text-align:center;">All Tools & Services</h3>
+            
+            <div class="tools-grid-4" id="toolsGridContainer">
+                <!-- Loading State -->
+                <div style="grid-column: span 4; text-align: center; color: #555;">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                </div>
+            </div>
+            
+            <div style="text-align:center; font-size:11px; color:#555; margin-top:20px;">
+                * টুলস ব্যবহার করতে আইকনে ট্যাপ করুন
             </div>
         </div>
 
@@ -438,16 +485,32 @@
         let userStatus = 'inactive';
         let appSettings = { fee: 500, bkash: "", nagad: "", customPrintLink: "" };
         let allProducts = [];
+        let toolLinks = {}; // To store links from DB
+
+        // --- NEW STATIC TOOLS DATA (FROM YOUR IMAGE) ---
+        const staticTools = [
+            { id: 't1', title: 'ফ্রিল্যান্সিং মার্কেটপ্লেস', icon: 'fa-store', color: '#4DB6AC' },
+            { id: 't2', title: 'মোবাইল রিচার্জ', icon: 'fa-mobile-alt', color: '#FF8A65' },
+            { id: 't3', title: 'ই-কমার্স ওয়েবসাইট', icon: 'fa-laptop-code', color: '#64B5F6' },
+            { id: 't4', title: 'প্যাসিভ ইনকাম', icon: 'fa-hand-holding-usd', color: '#FFD54F' },
+            { id: 't5', title: 'অর্ডার লিস্ট', icon: 'fa-list-ul', color: '#F06292' },
+            { id: 't6', title: 'অ্যাক্টিভ অর্ডারস', icon: 'fa-box-open', color: '#4FC3F7' },
+            { id: 't7', title: 'সেলস ড্যাশবোর্ড', icon: 'fa-chart-pie', color: '#FFB74D' },
+            { id: 't8', title: 'ব্যালেন্স স্টেটমেন্ট', icon: 'fa-file-invoice-dollar', color: '#81C784' },
+            { id: 't9', title: 'সাধারণ জিজ্ঞাসা', icon: 'fa-question-circle', color: '#90CAF9' },
+            { id: 't10', title: 'ইউটিউব চ্যানেল', icon: 'fa-youtube', color: '#E57373' },
+            { id: 't11', title: 'টেলিগ্রাম সাপোর্ট গ্রুপ', icon: 'fa-telegram', color: '#4DD0E1' },
+            { id: 't12', title: 'সাপোর্ট সেন্টার', icon: 'fa-headset', color: '#FFD54F' }
+        ];
 
         // --- INIT ---
         window.onload = async () => {
-            // Remove Preloader after a delay
+            // Remove Preloader
             setTimeout(() => {
                 document.getElementById('preloader').style.opacity = '0';
                 setTimeout(() => document.getElementById('preloader').style.display = 'none', 500);
             }, 1500);
 
-            // Banner Rotation Logic
             startBannerRotation();
 
             // Load Config
@@ -465,19 +528,19 @@
                 renderProducts(allProducts);
             });
 
-            // Load Tools
+            // Load Tools Links (New Logic)
             db.collection('tools').onSnapshot(renderTools);
 
             // Auth Logic
             if(tg.initDataUnsafe?.user) {
                 currentUser = tg.initDataUnsafe.user;
             } else {
-                currentUser = { id: 123456, first_name: "Test", last_name: "User", photo_url: "" }; // Fallback
+                currentUser = { id: 123456, first_name: "Test", last_name: "User", photo_url: "" }; 
             }
             initUser(currentUser);
         };
 
-        // --- USER & DASHBOARD LOGIC ---
+        // --- USER & DASHBOARD ---
         function initUser(user) {
             document.getElementById('userNameDisplay').innerText = user.first_name;
             document.getElementById('userIdDisplay').innerText = user.id;
@@ -489,7 +552,6 @@
                     userStatus = data.membershipStatus || 'inactive';
                     updateDashboard(data);
                 } else {
-                    // Create New User
                     db.collection('users').doc(String(user.id)).set({
                         userId: String(user.id),
                         firstName: user.first_name,
@@ -504,25 +566,18 @@
             });
         }
 
-        // --- ADVANCED DASHBOARD UPDATE ---
-        // এই ফাংশনটি এডমিন প্যানেল থেকে সেট করা ডাটা লাইভ আপডেট করবে
         function updateDashboard(data) {
-            // Stats
             document.getElementById('balanceDisplay').innerText = `৳ ${data.balance || 0}`;
             document.getElementById('withdrawBalance').innerText = `৳ ${data.balance || 0}`;
-            
-            // Detailed Stats from Admin
             document.getElementById('statSales').innerText = data.totalSales || 0;
-            document.getElementById('statEarnings').innerText = `৳ ${data.totalEarnings || 0}`; // Total Profit
+            document.getElementById('statEarnings').innerText = `৳ ${data.totalEarnings || 0}`;
             document.getElementById('statPending').innerText = `৳ ${data.pendingEarnings || 0}`;
             document.getElementById('statWithdrawn').innerText = `৳ ${data.withdrawnEarnings || 0}`;
 
-            // Status Badge
             const badge = document.getElementById('statusBadge');
             badge.innerText = userStatus.toUpperCase();
             badge.style.color = userStatus === 'active' ? '#00E676' : '#ccc';
 
-            // View Logic
             const homeActive = document.getElementById('home-active-content');
             const homeLocked = document.getElementById('home-locked-content');
 
@@ -545,16 +600,14 @@
             }
         }
 
-        // --- PRODUCT RENDER & FILTER ---
+        // --- PRODUCT RENDER ---
         function renderProducts(products) {
             const container = document.getElementById('productContainer');
             container.innerHTML = '';
-            
             if(products.length === 0) {
                 container.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #777;">No products found.</div>';
                 return;
             }
-
             products.forEach(p => {
                 const html = `
                     <div class="product-card">
@@ -575,11 +628,9 @@
         function filterCategory(cat, el) {
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
-
             if(cat === 'all') {
                 renderProducts(allProducts);
             } else {
-                // Simple filter based on name or a category field if available
                 const filtered = allProducts.filter(p => 
                     (p.category && p.category.toLowerCase() === cat) || 
                     p.name.toLowerCase().includes(cat)
@@ -593,13 +644,10 @@
             showToast("Details Copied! 📋");
         }
 
-        // --- BANNER SLIDER LOGIC ---
         function startBannerRotation() {
             let index = 0;
             const slides = document.querySelectorAll('.banner-slide');
             const placeholder = document.getElementById('bannerPlaceholder');
-            
-            // Hide placeholder if images exist
             if(slides.length > 0) {
                 placeholder.classList.add('hidden');
                 setInterval(() => {
@@ -610,26 +658,49 @@
             }
         }
 
+        // --- RENDER TOOLS (STATIC GRID + DYNAMIC LINKS) ---
         function renderTools(snap) {
-            const container = document.getElementById('toolsGridContainer');
-            if(snap.empty) {
-                container.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #555;">Coming Soon</div>';
-                return;
+            // Update local link cache from Firestore
+            if(!snap.empty) {
+                snap.forEach(doc => {
+                    // Assuming doc.id matches staticTools ID (e.g. 't1') or has a 'toolId' field
+                    const data = doc.data();
+                    const key = doc.id; 
+                    if(data.link) toolLinks[key] = data.link;
+                });
             }
-            let html = '';
-            snap.forEach(doc => {
-                const t = doc.data();
-                html += `
-                    <div class="glass-card" style="padding:15px; text-align:center;" onclick="handleLink('${t.link}')">
-                        <div style="font-size:24px; color:var(--primary); margin-bottom:8px;">${t.iconHTML || '<i class="fas fa-cube"></i>'}</div>
-                        <div style="font-size:13px; color:#fff;">${t.title}</div>
+
+            const container = document.getElementById('toolsGridContainer');
+            container.innerHTML = '';
+
+            // Loop through the STATIC list to ensure layout matches image
+            staticTools.forEach(tool => {
+                const html = `
+                    <div class="tool-item" onclick="openToolLink('${tool.id}')">
+                        <div class="tool-icon-box" style="background: ${tool.color}20; color: ${tool.color}; border: 1px solid ${tool.color}40;">
+                            <i class="fas ${tool.icon}"></i>
+                        </div>
+                        <div class="tool-title">${tool.title}</div>
                     </div>
                 `;
+                container.innerHTML += html;
             });
-            container.innerHTML = html;
         }
 
-        // --- PAYMENT FUNCTIONS ---
+        // Handle Tool Click
+        function openToolLink(toolId) {
+            // Check if link exists in DB cache
+            if(toolLinks[toolId]) {
+                tg.openLink(toolLinks[toolId]);
+            } else {
+                // Fallback or message
+                showToast("Service coming soon! 🛠️");
+                // For testing/demo, console log:
+                console.log(`Open tool: ${toolId} - No link set in DB (tools/${toolId})`);
+            }
+        }
+
+        // --- PAYMENT & UTILS ---
         window.openPaymentModal = () => {
             document.getElementById('payAmountDisplay').innerText = appSettings.activationFee || 500;
             document.getElementById('paymentModal').classList.add('show');
@@ -652,7 +723,6 @@
             const method = document.getElementById('payMethod').value;
             const sender = document.getElementById('senderPhone').value;
             const trx = document.getElementById('trxID').value;
-
             if(!method || !sender || !trx) return showToast("Please fill all fields ❌");
 
             const btn = document.querySelector('#paymentModal .btn-primary');
@@ -674,11 +744,9 @@
             finally { btn.innerText = "Confirm Payment"; btn.disabled = false; }
         };
 
-        // --- UTILS ---
         window.switchTab = (tab) => {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-'+tab).classList.add('active');
-            
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             const map = {home:0, dropshipping:1, tools:2, print:3, profile:4};
             document.querySelectorAll('.nav-item')[map[tab]].classList.add('active');
