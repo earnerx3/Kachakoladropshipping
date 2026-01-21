@@ -151,17 +151,12 @@
 
         /* --- NEW SERVICE CARD STYLE (BANNER TYPE) --- */
         .service-card {
-            background: #fff; /* White bg for contrast as per image, or use dark if preferred */
+            background: #151a21;
             border-radius: 12px;
             overflow: hidden;
             margin-bottom: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             border: 1px solid var(--border);
-        }
-        /* Dark mode override for service card to match app */
-        .service-card.dark-theme {
-            background: #151a21;
-            border-color: #333;
         }
         .svc-header {
             padding: 10px 15px;
@@ -170,14 +165,9 @@
             gap: 8px;
             font-size: 14px;
             font-weight: 600;
-            color: #333;
-            background: #f5f5f5;
-            border-bottom: 1px solid #eee;
-        }
-        .service-card.dark-theme .svc-header {
             background: #1f2630;
             color: #eee;
-            border-color: #333;
+            border-bottom: 1px solid #333;
         }
         .svc-banner-img {
             width: 100%;
@@ -191,18 +181,16 @@
         }
         .svc-price {
             font-size: 12px;
-            color: #666;
+            color: #aaa;
             margin-bottom: 8px;
             display: flex;
             align-items: center;
             gap: 5px;
         }
-        .service-card.dark-theme .svc-price { color: #aaa; }
-        
         .svc-btn {
             width: 100%;
             padding: 10px;
-            background: #00C853; /* Green color like the image */
+            background: #00C853; 
             color: #fff;
             border: none;
             border-radius: 6px;
@@ -224,28 +212,46 @@
         .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .stat-value { font-size: 18px; font-weight: 700; color: #fff; margin-top: 2px; }
 
-        /* --- INSTRUCTION TEXT STYLE --- */
+        /* --- INSTRUCTION CARD WITH EFFECTS --- */
         .instruct-card {
             background: rgba(255, 255, 255, 0.03);
             border-radius: 12px;
             padding: 15px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border-left: 3px solid var(--primary);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
         }
+        
+        /* Hover & Active Effect */
+        .instruct-card:active {
+            transform: scale(0.97);
+            background: linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            box-shadow: 0 0 15px rgba(253, 216, 53, 0.1);
+            border-left-color: #FF80AB;
+        }
+
         .instruct-title {
-            color: #FF8A80;
+            color: #FF80AB; /* Pinkish color matching the image */
             font-weight: 700;
-            font-size: 14px;
-            margin-bottom: 6px;
+            font-size: 15px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
+        
         .instruct-text {
-            color: #d1d5db;
+            color: #e0e0e0;
             font-size: 13px;
             line-height: 1.6;
             text-align: justify;
+            font-weight: 300;
         }
 
         /* --- SKELETON LOADER --- */
@@ -312,6 +318,18 @@
             border-radius: 16px; padding: 40px 20px; text-align: center;
             backdrop-filter: blur(5px);
         }
+
+        /* Withdraw Modal specific */
+        .withdraw-note {
+            color: #d1d5db;
+            font-size: 14px;
+            background: rgba(255, 82, 82, 0.1);
+            border: 1px solid var(--danger);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -357,8 +375,6 @@
             <div id="home-active-content">
                 <div class="product-grid" id="productContainer">
                     <!-- Skeleton Loading State -->
-                    <div class="skeleton sk-card"></div>
-                    <div class="skeleton sk-card"></div>
                     <div class="skeleton sk-card"></div>
                     <div class="skeleton sk-card"></div>
                 </div>
@@ -413,12 +429,12 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <i class="fas fa-shopping-bag text-gold"></i>
-                        <span class="stat-label">Total Sales</span>
+                        <span class="stat-label">Total Orders</span>
                         <span class="stat-value" id="statSales">0</span>
                     </div>
                     <div class="stat-card">
                         <i class="fas fa-wallet" style="color:#00E676;"></i>
-                        <span class="stat-label">Net Profit</span>
+                        <span class="stat-label">Spent / Profit</span>
                         <span class="stat-value" id="statEarnings">৳ 0</span>
                     </div>
                     <div class="stat-card">
@@ -428,8 +444,8 @@
                     </div>
                     <div class="stat-card">
                         <i class="fas fa-check-circle" style="color:#29B6F6;"></i>
-                        <span class="stat-label">Withdrawn</span>
-                        <span class="stat-value" id="statWithdrawn">৳ 0</span>
+                        <span class="stat-label">Completed</span>
+                        <span class="stat-value" id="statCompleted">৳ 0</span>
                     </div>
                 </div>
 
@@ -438,7 +454,7 @@
                         <div style="font-size:12px; color:#888;">Available to Withdraw</div>
                         <div style="font-size:20px; font-weight:700; color:var(--primary);" id="withdrawBalance">৳ 0.00</div>
                     </div>
-                    <button style="background:#333; color:#fff; border:1px solid #555; padding:8px 15px; border-radius:8px;" onclick="showToast('Withdrawal feature coming soon!')">Withdraw</button>
+                    <button style="background:#333; color:#fff; border:1px solid #555; padding:8px 15px; border-radius:8px;" onclick="handleWithdrawClick()">Withdraw</button>
                 </div>
 
                 <div style="margin-top:25px;">
@@ -450,29 +466,28 @@
             </div>
         </div>
 
-        <!-- TOOLS TAB (UPDATED WITH BANNER SECTION) -->
+        <!-- TOOLS TAB -->
         <div id="view-tools" class="view-section">
             <h3 style="margin-bottom:15px; text-align:center;">All Tools</h3>
             
-            <!-- Grid Buttons (As before) -->
             <div class="tools-grid-4" id="toolsGridContainer">
                 <div style="grid-column: span 4; text-align: center; color: #555;">
                     <div class="spinner" style="margin: 0 auto;"></div>
                 </div>
             </div>
             
-            <!-- NEW: Premium Services / Banner Section -->
+            <!-- Premium Services Banner Section -->
             <h3 style="margin-top:25px; margin-bottom:15px; padding-left:10px; border-left:3px solid var(--success); font-size:16px;">
                 Premium Services
             </h3>
             
             <div id="services-list" style="padding-bottom:20px;">
-                <!-- Dynamic Content Will Load Here -->
+                <!-- Services will load here -->
                 <div class="skeleton" style="height:200px; width:100%; margin-bottom:15px;"></div>
             </div>
         </div>
 
-        <!-- PRINT TAB -->
+        <!-- PRINT TAB (UPDATED SECTION) -->
         <div id="view-print" class="view-section">
             <div style="text-align:center; margin-bottom:20px;">
                 <h2 style="color:var(--primary); font-weight:700; font-size: 22px;">Custom Print</h2>
@@ -481,58 +496,58 @@
                 </div>
             </div>
             
-            <!-- Instructions List -->
+            <!-- Instructions List Updated -->
             <div class="instruct-card">
-                <div class="instruct-title"><i class="fas fa-edit"></i> অর্ডার প্রসেস>></div>
+                <div class="instruct-title">অর্ডার প্রসেস <i class="fas fa-angle-double-right"></i></div>
                 <div class="instruct-text">
                     আপনার পছন্দ মত যেকোনো ডিজাইন, ছবি, লোগো এবং নাম দিয়ে ডিজাইন করে অর্ডার প্লেস করতে পারবেন। সর্বনিম্ন ১ পিস ও অর্ডার করতে পারবেন।
                 </div>
             </div>
 
             <div class="instruct-card">
-                <div class="instruct-title"><i class="fas fa-money-bill-wave"></i> পেমেন্ট এন্ড রিটার্ন>></div>
+                <div class="instruct-title">পেমেন্ট এন্ড রিটার্ন <i class="fas fa-angle-double-right"></i></div>
                 <div class="instruct-text">
                     যেহেতু আপনার নাম বা ডিজাইন দিয়ে প্রিন্ট হবে, তাই পরবর্তীতে এই প্রোডাক্ট অন্য কারো কাছে সেল হবে না। তাই ফুল পেমেন্ট করে অর্ডার করতে হবে এবং প্রোডাক্টের ত্রুটি না থাকলে রিটার্ন হবে না।
                 </div>
             </div>
 
             <div class="instruct-card">
-                <div class="instruct-title"><i class="fas fa-shipping-fast"></i> ডেলিভারির সময়>></div>
+                <div class="instruct-title">ডেলিভারির সময় <i class="fas fa-angle-double-right"></i></div>
                 <div class="instruct-text">
                     যেহেতু কাস্টম প্রিন্ট, তাই ন্যূনতম ৩-৫ দিন সময় নিবেন, ধীরে ধীরে আরও ফাস্ট ডেলিভারি করা হবে।
                 </div>
             </div>
 
             <div class="instruct-card">
-                <div class="instruct-title"><i class="fas fa-chart-line"></i> প্রাইস এন্ড প্রফিট>></div>
+                <div class="instruct-title">প্রাইস এন্ড প্রফিট <i class="fas fa-angle-double-right"></i></div>
                 <div class="instruct-text">
                     অ্যাপসে অ্যাডমিন প্রাইস দেওয়া আছে, এর উপরে যত টাকা বেশি সেল করবেন সেটা আপনার প্রফিট। আপনার প্রফিটের টাকা আপনার কাছে রেখে অ্যাডমিন প্রাইস পেমেন্ট করে অর্ডার প্লেস করবেন।
                 </div>
             </div>
 
             <div class="instruct-card">
-                <div class="instruct-title"><i class="fas fa-box"></i> কুরিয়ারে বুকিং>></div>
+                <div class="instruct-title">কুরিয়ারে বুকিং <i class="fas fa-angle-double-right"></i></div>
                 <div class="instruct-text">
                     আপনারা চাইলে সরাসরি আপনাদের নিজস্ব কুরিয়ার প্যানেল থেকে বুকিং দিয়ে পার্সেল পাঠাতে পারবেন। সেক্ষেত্রে অর্ডার নোটে পার্সেল আইডি দিয়ে দিলে আমরা কুরিয়ারে প্রোডাক্ট পৌঁছে দেব।
                 </div>
             </div>
 
             <div class="instruct-card">
-                <div class="instruct-title"><i class="fas fa-tshirt"></i> প্রোডাক্ট এন্ড ডিজাইন>></div>
+                <div class="instruct-title">প্রোডাক্ট এন্ড ডিজাইন <i class="fas fa-angle-double-right"></i></div>
                 <div class="instruct-text">
                     আপাতত টি শার্ট এবং হুডি দিয়ে শুরু করা হল। ধীরে ধীরে সকল ধরনের প্রোডাক্ট চলে আসবে। এবং ডিজাইন আরও সহজে করার জন্য প্রয়োজনীয় সিস্টেম আপডেট করা হবে।
                 </div>
             </div>
 
             <div class="instruct-card">
-                <div class="instruct-title"><i class="fas fa-video"></i> টিউটোরিয়াল ভিডিও>></div>
+                <div class="instruct-title">টিউটোরিয়াল ভিডিও <i class="fas fa-angle-double-right"></i></div>
                 <div class="instruct-text">
                     খুব দ্রুতই প্রয়োজনীয় সকল টিউটোরিয়াল ভিডিও প্রোভাইড করা হবে।
                 </div>
             </div>
             
-            <div style="padding-bottom: 20px;">
-                <button class="btn-primary" onclick="openCustomLink()" style="background: linear-gradient(45deg, #FF6F00, #FDD835); color: #000; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <div style="padding-bottom: 20px; margin-top: 20px;">
+                <button class="btn-primary" onclick="openCustomLink()" style="background: linear-gradient(45deg, #FF6F00, #FDD835); color: #000; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: bold; font-size: 18px; box-shadow: 0 0 15px rgba(253, 216, 53, 0.4);">
                     কাস্টমাইজ করুন <i class="fas fa-angle-double-right"></i>
                 </button>
             </div>
@@ -568,7 +583,7 @@
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('home')"><i class="fas fa-home"></i>Home</div>
         <div class="nav-item" onclick="switchTab('dropshipping')"><i class="fas fa-chart-line"></i>Business</div>
-        <div class="nav-item" onclick="switchTab('tools')"><i class="fas fa-th-large"></i>Tools</div>
+        <div class="nav-item" onclick="handleShopClick()"><i class="fas fa-th-large"></i>Shop</div>
         <div class="nav-item" onclick="switchTab('print')"><i class="fas fa-tshirt"></i>Print</div>
         <div class="nav-item" onclick="switchTab('profile')"><i class="fas fa-user"></i>Profile</div>
     </div>
@@ -605,6 +620,29 @@
         </div>
     </div>
 
+    <!-- WITHDRAW RESTRICTION MODAL -->
+    <div id="withdrawModal" class="overlay">
+        <div class="modal-sheet">
+             <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>Withdraw Locked 🔒</h3>
+                <i class="fas fa-times" onclick="closeWithdrawModal()" style="cursor:pointer;"></i>
+            </div>
+            
+            <div style="text-align:center; padding: 20px 0;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 50px; color: #FF9800; margin-bottom: 20px;"></i>
+                <h4 style="margin-bottom: 10px;">Requirement Not Met</h4>
+                <div class="withdraw-note">
+                    টাকা উত্তোলন করার জন্য আপনাকে মিনিমাম <span style="color: #fff; font-weight: bold;">৫টি</span> প্রোডাক্ট সেল করতে হবে।
+                </div>
+                <p style="color: #aaa; font-size: 13px; margin-bottom: 25px;">
+                    আপনার বর্তমান সেল: <span id="currentSalesCount" style="color: var(--primary); font-weight: bold;">0</span>
+                </p>
+                
+                <button class="btn-primary" onclick="openDropshippingBot()">Join & Sell Now <i class="fas fa-external-link-alt"></i></button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast">Message</div>
 
     <script>
@@ -626,6 +664,7 @@
         // State
         let currentUser = null;
         let userStatus = 'inactive';
+        let userTotalSales = 0; // Track sales count
         let appSettings = { fee: 500, bkash: "", nagad: "", customPrintLink: "" };
         let allProducts = [];
         let toolLinks = {};
@@ -674,7 +713,7 @@
             // Load Tools Grid Links
             db.collection('tools').onSnapshot(renderTools);
 
-            // Load Banner Services (NEW)
+            // Load Banner Services
             db.collection('services').onSnapshot(renderServices);
 
             // Auth Logic
@@ -686,40 +725,67 @@
             initUser(currentUser);
         };
 
-        // --- USER & DASHBOARD ---
+        // --- USER & DASHBOARD LOGIC ---
         function initUser(user) {
             document.getElementById('userNameDisplay').innerText = user.first_name;
             document.getElementById('userIdDisplay').innerText = user.id;
             if(user.photo_url) document.getElementById('userAvatar').src = user.photo_url;
 
+            // 1. Check User Status
             db.collection('users').doc(String(user.id)).onSnapshot(doc => {
                 if(doc.exists) {
                     const data = doc.data();
                     userStatus = data.membershipStatus || 'inactive';
-                    updateDashboard(data);
+                    updateUIBasedOnStatus();
                 } else {
+                    // Create User if not exists
                     db.collection('users').doc(String(user.id)).set({
                         userId: String(user.id),
                         firstName: user.first_name,
                         membershipStatus: 'inactive',
-                        balance: 0,
-                        totalSales: 0,
-                        pendingEarnings: 0,
-                        withdrawnEarnings: 0,
                         joinedAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 }
             });
+
+            // 2. Load Stats from ORDERS Collection
+            loadUserOrderStats(String(user.id));
         }
 
-        function updateDashboard(data) {
-            document.getElementById('balanceDisplay').innerText = `৳ ${data.balance || 0}`;
-            document.getElementById('withdrawBalance').innerText = `৳ ${data.balance || 0}`;
-            document.getElementById('statSales').innerText = data.totalSales || 0;
-            document.getElementById('statEarnings').innerText = `৳ ${data.totalEarnings || 0}`;
-            document.getElementById('statPending').innerText = `৳ ${data.pendingEarnings || 0}`;
-            document.getElementById('statWithdrawn').innerText = `৳ ${data.withdrawnEarnings || 0}`;
+        function loadUserOrderStats(userId) {
+            db.collection('orders').where('userId', '==', userId).onSnapshot(snap => {
+                let totalOrders = 0;
+                let pendingAmount = 0;
+                let completedAmount = 0;
+                let completedOrdersCount = 0;
 
+                snap.forEach(doc => {
+                    const order = doc.data();
+                    const amount = Number(order.amount) || 0;
+                    totalOrders++;
+
+                    if (order.status === 'pending') {
+                        pendingAmount += amount;
+                    } else if (order.status === 'completed') {
+                        completedAmount += amount;
+                        completedOrdersCount++; // Count completed sales
+                    }
+                });
+                
+                // Update global variable for validation
+                userTotalSales = completedOrdersCount;
+
+                // Update Dashboard UI
+                document.getElementById('statSales').innerText = totalOrders;
+                document.getElementById('statEarnings').innerText = `৳ ${completedAmount}`; 
+                document.getElementById('statPending').innerText = `৳ ${pendingAmount}`;
+                document.getElementById('statCompleted').innerText = `৳ ${completedAmount}`;
+                
+                document.getElementById('balanceDisplay').innerText = `৳ ${completedAmount}`; 
+            });
+        }
+
+        function updateUIBasedOnStatus() {
             const badge = document.getElementById('statusBadge');
             badge.innerText = userStatus.toUpperCase();
             badge.style.color = userStatus === 'active' ? '#00E676' : '#ccc';
@@ -745,6 +811,41 @@
                 homeLocked.classList.remove('hidden');
             }
         }
+
+        // --- NEW BUTTON LOGICS ---
+
+        // 1. Shop Button Logic
+        window.handleShopClick = () => {
+            if (userStatus === 'active') {
+                switchTab('tools');
+            } else {
+                // Open external bot link
+                tg.openLink('https://t.me/dropshipping_kachakola_bot/app');
+            }
+        };
+
+        // 2. Withdraw Button Logic
+        window.handleWithdrawClick = () => {
+            // Check sales requirement (Min 5 sales)
+            if (userTotalSales >= 5) {
+                // Allowed to withdraw (Show toast or open actual withdraw modal if implemented)
+                showToast('Withdrawal request feature coming soon!'); 
+            } else {
+                // Not allowed, show restriction modal
+                document.getElementById('currentSalesCount').innerText = userTotalSales;
+                document.getElementById('withdrawModal').classList.add('show');
+            }
+        };
+        
+        window.closeWithdrawModal = () => {
+            document.getElementById('withdrawModal').classList.remove('show');
+        };
+
+        window.openDropshippingBot = () => {
+            tg.openLink('https://t.me/dropshipping_kachakola_bot/app');
+            closeWithdrawModal();
+        };
+
 
         // --- PRODUCT RENDER ---
         function renderProducts(products) {
@@ -804,13 +905,12 @@
             }
         }
 
-        // --- RENDER TOOLS (GRID) ---
+        // --- RENDER TOOLS ---
         function renderTools(snap) {
             if(!snap.empty) {
                 snap.forEach(doc => {
                     const data = doc.data();
-                    const key = doc.id; 
-                    if(data.link) toolLinks[key] = data.link;
+                    if(data.link) toolLinks[doc.id] = data.link;
                 });
             }
 
@@ -838,16 +938,14 @@
             }
         }
 
-        // --- RENDER SERVICES (BANNER LIST - NEW) ---
+        // --- RENDER SERVICES ---
         function renderServices(snap) {
             const container = document.getElementById('services-list');
             container.innerHTML = '';
-
             if (snap.empty) {
                 container.innerHTML = '<div style="text-align:center; color:#555;">No services available</div>';
                 return;
             }
-
             snap.forEach(doc => {
                 const d = doc.data();
                 const html = `
@@ -858,7 +956,7 @@
                         <img src="${d.image || 'https://placehold.co/600x340/222/FFF?text=Service'}" class="svc-banner-img">
                         <div class="svc-footer">
                             ${d.price ? `<div class="svc-price"><i class="fas fa-tag"></i> TK ${d.price}</div>` : ''}
-                            <button class="svc-btn" onclick="handleLink('${d.link}')">Service details <i class="fas fa-chevron-right"></i></button>
+                            <button class="svc-btn" onclick="window.location.href='premium_services.html'">View All & Buy <i class="fas fa-chevron-right"></i></button>
                         </div>
                     </div>
                 `;
@@ -915,8 +1013,16 @@
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-'+tab).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Map tab names to nav item index
             const map = {home:0, dropshipping:1, tools:2, print:3, profile:4};
-            document.querySelectorAll('.nav-item')[map[tab]].classList.add('active');
+            
+            // Special handling for Shop (index 2)
+            if(tab === 'tools') {
+                 document.querySelectorAll('.nav-item')[2].classList.add('active');
+            } else {
+                 if(map[tab] !== undefined) document.querySelectorAll('.nav-item')[map[tab]].classList.add('active');
+            }
         };
 
         window.handleLink = (link) => link ? tg.openLink(link) : showToast("Link not valid");
