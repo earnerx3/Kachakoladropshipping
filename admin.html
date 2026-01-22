@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KK Super Admin Panel</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root { 
+            --bg: #05090e; 
+            --sidebar: #11161d;
+            --card: #1a2029;
+            --gold: #FDD835; 
+            --text: #fff; 
+            --muted: #8B949E; 
+            --border: #252b33; 
+            --success: #00E676; 
+            --danger: #FF5252; 
+            --blue: #29B6F6;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', 'Hind Siliguri', sans-serif; }
+        body { background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; }
+        
+        /* Layout */
+        .sidebar { width:250px; background:var(--sidebar); border-right:1px solid var(--border); padding:20px; display:flex; flex-direction:column; gap:5px; transition:0.3s; }
+        .main { flex:1; padding:25px; overflow-y:auto; position:relative; }
+        .hidden { display:none !important; }
+
+        /* UI Elements */
+        h2 { color:var(--gold); margin-bottom:20px; font-size:22px; border-bottom:1px solid var(--border); padding-bottom:10px; display:flex; align-items:center; gap:10px; }
+        .btn { padding:8px 15px; border-radius:6px; border:none; cursor:pointer; font-weight:600; transition:0.3s; font-size:13px; display:inline-flex; align-items:center; gap:5px; }
+        .btn-gold { background:var(--gold); color:#000; }
+        .btn-danger { background:rgba(255, 82, 82, 0.15); color:var(--danger); border:1px solid var(--danger); }
+        .btn-success { background:rgba(0, 230, 118, 0.15); color:var(--success); border:1px solid var(--success); }
+        .btn-blue { background:rgba(41, 182, 246, 0.15); color:var(--blue); border:1px solid var(--blue); }
+        
+        .input-box, select, textarea { width:100%; background:#0a0d11; border:1px solid var(--border); padding:12px; border-radius:8px; color:#fff; margin-bottom:10px; outline:none; }
+        .input-box:focus { border-color:var(--gold); }
+        
+        /* Sidebar Links */
+        .brand { font-size:20px; font-weight:700; color:var(--gold); margin-bottom:30px; display:flex; align-items:center; gap:10px; padding-left:10px; }
+        .nav-item { padding:12px; border-radius:8px; color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:12px; transition:0.2s; font-size:14px; }
+        .nav-item:hover, .nav-item.active { background:rgba(253, 216, 53, 0.15); color:var(--gold); }
+        .nav-item i { width:20px; text-align:center; }
+
+        /* Dashboard Stats */
+        .stats-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:25px; }
+        .stat-card { background:var(--card); padding:20px; border-radius:12px; border:1px solid var(--border); display:flex; align-items:center; gap:15px; }
+        .stat-icon { width:50px; height:50px; background:rgba(255,255,255,0.05); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--gold); }
+
+        /* Tables & Lists */
+        .table-container { overflow-x:auto; background:var(--card); border-radius:12px; border:1px solid var(--border); }
+        table { width:100%; border-collapse:collapse; min-width:700px; }
+        th { text-align:left; color:var(--muted); padding:15px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); }
+        td { padding:15px; border-bottom:1px solid #252b33; font-size: 13px; color:#ddd; }
+        
+        /* Grid for Products & Services */
+        .grid-container { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:15px; }
+        .card-item { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:15px; position:relative; overflow:hidden; }
+        
+        /* Order & Deposit Cards (New Design) */
+        .order-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 15px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .ord-info h4 { color: #fff; margin-bottom: 5px; font-size: 15px; }
+        .ord-sub { font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+        .ord-highlight { color: var(--blue); font-weight: 500; }
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        .bg-pending { background: rgba(255, 165, 0, 0.2); color: orange; }
+        .bg-success { background: rgba(0, 230, 118, 0.2); color: var(--success); }
+        .bg-danger { background: rgba(255, 82, 82, 0.2); color: var(--danger); }
+
+        /* Settings Switch */
+        .switch { position: relative; display: inline-block; width: 45px; height: 22px; float:right; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Login Screen */
+        #login-overlay { position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; justify-content:center; align-items:center; }
+        .login-box { background:var(--card); padding:40px; border-radius:20px; width:350px; text-align:center; border:1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        @media(max-width:768px) {
+            body { flex-direction:column; }
+            .sidebar { width:100%; height:auto; flex-direction:row; overflow-x:auto; order:2; padding:10px; border-top:1px solid var(--border); border-right:none; }
+            .main { order:1; padding:15px; padding-bottom:80px; }
+            .nav-item span { display:none; }
+            .nav-item { justify-content:center; flex:1; }
+            .order-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .order-actions { width: 100%; display: flex; justify-content: flex-end; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <i class="fas fa-fingerprint" style="font-size:45px; color:var(--gold); margin-bottom:20px;"></i>
+            <h3 style="color:#fff; margin-bottom:5px;">Admin Panel</h3>
+            <p style="color:var(--muted); font-size:12px; margin-bottom:20px;">Restricted Access</p>
+            <input type="email" id="email" class="input-box" placeholder="admin@kachakola.com">
+            <input type="password" id="pass" class="input-box" placeholder="Password">
+            <button class="btn btn-gold" onclick="login()" style="width:100%; justify-content:center;">Login Dashboard</button>
+            <p id="msg" style="color:var(--danger); font-size:12px; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="brand"><i class="fas fa-leaf"></i> Kacha Kola</div>
+        
+        <div class="nav-item active" onclick="tab('dashboard', this)"><i class="fas fa-home"></i> <span>Dashboard</span></div>
+        <div class="nav-item" onclick="tab('orders', this)"><i class="fas fa-shopping-bag"></i> <span>Orders (New)</span></div>
+        <div class="nav-item" onclick="tab('products', this)"><i class="fas fa-box-open"></i> <span>Dropshipping</span></div>
+        <div class="nav-item" onclick="tab('services', this)"><i class="fas fa-layer-group"></i> <span>Services</span></div>
+        <div class="nav-item" onclick="tab('tools', this)"><i class="fas fa-tools"></i> <span>Tools</span></div>
+        <div class="nav-item" onclick="tab('users', this)"><i class="fas fa-users"></i> <span>Users</span></div>
+        <div class="nav-item" onclick="tab('deposits', this)"><i class="fas fa-wallet"></i> <span>Deposits</span></div>
+        <div class="nav-item" onclick="tab('settings', this)"><i class="fas fa-cog"></i> <span>Settings</span></div>
+        
+        <div class="nav-item" style="margin-top:auto; color:var(--danger);" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main hidden" id="main-panel">
+        
+        <!-- DASHBOARD -->
+        <div id="view-dashboard">
+            <h2>Dashboard Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                    <div>
+                        <div style="font-size:24px; font-weight:700; color:#fff;" id="dash-orders">0</div>
+                        <div style="font-size:12px; color:var(--muted);">Pending Orders</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color:var(--success); background:rgba(0,230,118,0.1);"><i class="fas fa-user-check"></i></div>
+                    <div>
+                        <div style="font-size:24px; font-weight:700; color:#fff;" id="dash-deposits">0</div>
+                        <div style="font-size:12px; color:var(--muted);">Membership Req</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color:var(--blue); background:rgba(41,182,246,0.1);"><i class="fas fa-users"></i></div>
+                    <div>
+                        <div style="font-size:24px; font-weight:700; color:#fff;" id="dash-users">0</div>
+                        <div style="font-size:12px; color:var(--muted);">Total Users</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color:#FF9800; background:rgba(255,152,0,0.1);"><i class="fas fa-box"></i></div>
+                    <div>
+                        <div style="font-size:24px; font-weight:700; color:#fff;" id="dash-products">0</div>
+                        <div style="font-size:12px; color:var(--muted);">Total Products</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ORDERS (NEW FEATURE) -->
+        <div id="view-orders" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2><i class="fas fa-shopping-bag"></i> Service Orders</h2>
+                <button class="btn btn-gold" onclick="loadOrders()">Refresh List</button>
+            </div>
+            
+            <div id="orders-list">
+                <!-- Javascript will load orders here -->
+                <div style="text-align:center; padding:50px; color:#555;">Loading orders...</div>
+            </div>
+        </div>
+
+        <!-- PRODUCTS (DROPSHIPPING) -->
+        <div id="view-products" class="hidden">
+            <h2>Product Manager</h2>
+            
+            <div class="setting-group" style="background:var(--card); padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
+                <h4 style="margin-bottom:15px; color:#fff;">Add New Product</h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <input type="text" id="pName" class="input-box" placeholder="Product Name">
+                    <input type="number" id="pPrice" class="input-box" placeholder="Price (Amount)">
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <select id="pCat" class="input-box">
+                        <option value="gadget">Gadget</option>
+                        <option value="fashion">Fashion</option>
+                        <option value="watch">Watch</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <input type="text" id="pLink" class="input-box" placeholder="Affiliate/Buy Link">
+                </div>
+                <input type="text" id="pImg" class="input-box" placeholder="Image URL (Direct Link)">
+                <button class="btn btn-gold" style="width:100%; justify-content:center;" onclick="addProduct()">Publish Product</button>
+            </div>
+
+            <h4 style="margin:20px 0;">Live Products</h4>
+            <div class="grid-container" id="productList"></div>
+        </div>
+
+        <!-- SERVICES -->
+        <div id="view-services" class="hidden">
+            <h2>Premium Services</h2>
+            <div class="setting-group" style="background:var(--card); padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
+                <h4 style="margin-bottom:15px;">Add New Service</h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <input type="text" id="sTitle" class="input-box" placeholder="Service Title">
+                    <input type="number" id="sPrice" class="input-box" placeholder="Price (Tk)">
+                </div>
+                <input type="text" id="sImg" class="input-box" placeholder="Image URL">
+                <textarea id="sDesc" class="input-box" placeholder="Description..." style="height:80px;"></textarea>
+                <button class="btn btn-gold" style="width:100%; justify-content:center;" onclick="addService()">Add Service</button>
+            </div>
+
+            <h4 style="margin-bottom:15px;">Active Services</h4>
+            <div class="grid-container" id="serviceList"></div>
+        </div>
+
+        <!-- TOOLS -->
+        <div id="view-tools" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>Tools Setup</h2>
+                <button class="btn btn-gold" onclick="loadTools()">Refresh</button>
+            </div>
+            <p style="color:var(--muted); margin-bottom:20px; font-size:13px;">Set links for the 12 tools. Leave empty for "Coming Soon".</p>
+            <div class="grid-container" id="toolsGrid"></div>
+        </div>
+
+        <!-- USERS -->
+        <div id="view-users" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2>User Database</h2>
+                <button class="btn btn-gold" onclick="loadUsers()">Refresh</button>
+            </div>
+            <input type="text" id="searchUser" class="input-box" placeholder="Search by Name or ID..." onkeyup="filterUsers()">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>User Details</th><th>Status</th><th>Sales</th><th>Income</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="userTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- DEPOSITS -->
+        <div id="view-deposits" class="hidden">
+            <h2><i class="fas fa-wallet"></i> Membership Requests</h2>
+            <div id="depositList" style="margin-top:20px;"></div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="view-settings" class="hidden">
+            <h2>App Configuration</h2>
+
+            <div style="background:var(--card); padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
+                <h4 style="margin-bottom:20px; color:var(--gold);">Payment Methods (Orders)</h4>
+                
+                <!-- bKash -->
+                <div style="background:#0b0f15; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span style="font-weight:600; color:#E2136E;">bKash Personal</span>
+                        <label class="switch">
+                            <input type="checkbox" id="swBkash">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <input type="text" id="numBkash" class="input-box" placeholder="Enter bKash Number" style="margin-bottom:0;">
+                </div>
+
+                <!-- Nagad -->
+                <div style="background:#0b0f15; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span style="font-weight:600; color:#F7931D;">Nagad Personal</span>
+                        <label class="switch">
+                            <input type="checkbox" id="swNagad">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <input type="text" id="numNagad" class="input-box" placeholder="Enter Nagad Number" style="margin-bottom:0;">
+                </div>
+
+                <button class="btn btn-gold" style="width:100%; justify-content:center;" onclick="saveSettings('payment')">Save Payment Settings</button>
+            </div>
+
+            <div style="background:var(--card); padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
+                <h4 style="margin-bottom:15px;">General Settings</h4>
+                <label style="color:#aaa; font-size:12px;">Activation Fee</label>
+                <input type="number" id="setFee" class="input-box">
+                
+                <label style="color:#aaa; font-size:12px;">Custom Print Link</label>
+                <input type="text" id="linkPrint" class="input-box">
+
+                <label style="color:#aaa; font-size:12px;">App Notice</label>
+                <textarea id="setNotice" class="input-box" style="height:80px;"></textarea>
+                
+                <button class="btn btn-gold" style="width:100%; justify-content:center;" onclick="saveSettings('general')">Update General Info</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2yM6GXC2kZMEEMYjdsveDpDHfKzriq0I",
+            authDomain: "nahid-fa459.firebaseapp.com",
+            projectId: "nahid-fa459",
+            storageBucket: "nahid-fa459.firebasestorage.app",
+            messagingSenderId: "970994023392",
+            appId: "1:970994023392:web:571332949894edcf4d0985"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // --- AUTH & INIT ---
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('main-panel').classList.remove('hidden');
+                initData();
+            }
+        });
+
+        async function login() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('pass').value;
+            try { await auth.signInWithEmailAndPassword(e, p); } 
+            catch(err) { document.getElementById('msg').innerText = err.message; }
+        }
+        function logout() { auth.signOut(); location.reload(); }
+
+        function tab(id, el) {
+            document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById('view-'+id).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if(el) el.classList.add('active');
+        }
+
+        function initData() {
+            loadDashboard(); loadOrders(); loadProducts(); loadServices(); loadUsers(); loadDeposits(); loadTools(); loadSettings();
+        }
+
+        // --- 1. ORDERS MANAGEMENT (NEW) ---
+        function loadOrders() {
+            const list = document.getElementById('orders-list');
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Loading...</div>';
+            
+            db.collection('orders').orderBy('timestamp', 'desc').get().then(snap => {
+                list.innerHTML = '';
+                if(snap.empty) { list.innerHTML = '<div style="text-align:center; color:#555;">No orders found.</div>'; return; }
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const statusClass = d.status === 'completed' ? 'bg-success' : (d.status === 'rejected' ? 'bg-danger' : 'bg-pending');
+                    const borderColor = d.status === 'completed' ? 'var(--success)' : (d.status === 'rejected' ? 'var(--danger)' : 'orange');
+
+                    list.innerHTML += `
+                        <div class="order-card" style="border-left: 4px solid ${borderColor};">
+                            <div class="ord-info">
+                                <h4>${d.serviceTitle || 'Unknown Service'}</h4>
+                                <div class="ord-sub"><i class="fas fa-user"></i> ${d.fullName || 'User'} (${d.userName})</div>
+                                <div class="ord-sub ord-highlight"><i class="fab fa-whatsapp"></i> ${d.userContact} | <i class="fas fa-envelope"></i> ${d.userEmail || 'N/A'}</div>
+                                <div class="ord-sub" style="margin-top:5px; color:#aaa;">
+                                    Method: ${d.method} | Sender: ${d.senderNumber} | TrxID: <span style="color:#fff">${d.trxId}</span>
+                                </div>
+                            </div>
+                            <div class="order-actions" style="text-align:right;">
+                                <div style="font-size:18px; font-weight:700; color:var(--gold); margin-bottom:5px;">৳ ${d.amount}</div>
+                                <span class="badge ${statusClass}">${d.status}</span>
+                                <div style="margin-top:8px;">
+                                    ${d.status === 'pending' ? `
+                                        <button class="btn btn-success" onclick="updateOrder('${doc.id}', 'completed')"><i class="fas fa-check"></i> Deliver</button>
+                                        <button class="btn btn-danger" onclick="updateOrder('${doc.id}', 'rejected')"><i class="fas fa-times"></i> Reject</button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function updateOrder(id, status) {
+            if(!confirm(`Mark this order as ${status}?`)) return;
+            db.collection('orders').doc(id).update({ status: status }).then(() => {
+                loadOrders(); loadDashboard();
+            });
+        }
+
+        // --- 2. PRODUCTS ---
+        function loadProducts() {
+            const grid = document.getElementById('productList');
+            db.collection('products').orderBy('timestamp', 'desc').get().then(snap => {
+                grid.innerHTML = '';
+                document.getElementById('dash-products').innerText = snap.size;
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    grid.innerHTML += `
+                        <div class="card-item">
+                            <div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.8); color:red; padding:5px; border-radius:4px; cursor:pointer;" onclick="deleteDoc('products','${doc.id}')"><i class="fas fa-trash"></i></div>
+                            <img src="${p.image}" style="width:100%; height:120px; object-fit:cover; border-radius:5px; margin-bottom:10px;">
+                            <div style="font-weight:bold; font-size:14px;">${p.name}</div>
+                            <div style="color:var(--gold); font-weight:bold;">৳ ${p.price}</div>
+                        </div>`;
+                });
+            });
+        }
+
+        async function addProduct() {
+            const name = document.getElementById('pName').value;
+            const price = document.getElementById('pPrice').value;
+            const img = document.getElementById('pImg').value;
+            const link = document.getElementById('pLink').value;
+            const cat = document.getElementById('pCat').value;
+
+            if(!name || !price) return alert("Name & Price Required");
+            await db.collection('products').add({ name, price, image: img, link, category: cat, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            alert("Product Added"); loadProducts();
+        }
+
+        // --- 3. SERVICES ---
+        function loadServices() {
+            const grid = document.getElementById('serviceList');
+            db.collection('services').get().then(snap => {
+                grid.innerHTML = '';
+                snap.forEach(doc => {
+                    const s = doc.data();
+                    grid.innerHTML += `
+                        <div class="card-item">
+                            <div style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.8); color:red; padding:5px; border-radius:4px; cursor:pointer;" onclick="deleteDoc('services','${doc.id}')"><i class="fas fa-trash"></i></div>
+                            <img src="${s.image}" style="width:100%; height:100px; object-fit:cover; border-radius:5px;">
+                            <div style="font-weight:bold; margin-top:5px;">${s.title}</div>
+                            <div style="color:var(--gold);">৳ ${s.price}</div>
+                        </div>`;
+                });
+            });
+        }
+
+        async function addService() {
+            const title = document.getElementById('sTitle').value;
+            const price = document.getElementById('sPrice').value;
+            const img = document.getElementById('sImg').value;
+            const desc = document.getElementById('sDesc').value;
+
+            if(!title) return alert("Title Required");
+            await db.collection('services').add({ title, price, image: img, description: desc, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            alert("Service Added"); loadServices();
+        }
+
+        // --- 4. USERS ---
+        let lastUser = null;
+        function loadUsers() {
+            db.collection('users').orderBy('joinedAt', 'desc').limit(30).get().then(snap => {
+                const tbody = document.getElementById('userTable');
+                tbody.innerHTML = '';
+                document.getElementById('dash-users').innerText = snap.size; // Only counts loaded, fix in real prod
+                snap.forEach(doc => {
+                    const u = doc.data();
+                    const statusColor = u.membershipStatus === 'active' ? 'var(--success)' : 'orange';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>${u.firstName}</b><br><span style="font-size:11px; color:#777">${u.userId}</span></td>
+                            <td style="color:${statusColor}">${u.membershipStatus}</td>
+                            <td>${u.totalSales || 0}</td>
+                            <td style="color:var(--gold)">৳ ${u.totalEarnings || 0}</td>
+                            <td><button class="btn btn-blue" onclick="editUser('${doc.id}')">Edit</button></td>
+                        </tr>`;
+                });
+            });
+        }
+
+        function editUser(id) {
+            const status = prompt("Set Status (active/inactive):");
+            if(status) db.collection('users').doc(id).update({ membershipStatus: status.toLowerCase() }).then(loadUsers);
+        }
+
+        // --- 5. DEPOSITS ---
+        function loadDeposits() {
+            const list = document.getElementById('depositList');
+            db.collection('deposits').where('status', '==', 'pending').get().then(snap => {
+                list.innerHTML = snap.empty ? '<div style="text-align:center; color:#555">No pending requests</div>' : '';
+                document.getElementById('dash-deposits').innerText = snap.size;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    list.innerHTML += `
+                        <div class="order-card">
+                            <div class="ord-info">
+                                <h4>${d.userName}</h4>
+                                <div class="ord-sub">${d.method} | Sender: ${d.sender}</div>
+                                <div class="ord-sub">TrxID: <span style="color:#fff">${d.trxId}</span></div>
+                            </div>
+                            <div class="order-actions" style="text-align:right;">
+                                <div style="font-size:18px; color:var(--gold); font-weight:700;">৳ ${d.amount}</div>
+                                <button class="btn btn-success" onclick="processDeposit('${doc.id}','${d.userId}','approved')">Approve</button>
+                                <button class="btn btn-danger" onclick="processDeposit('${doc.id}','${d.userId}','rejected')">Reject</button>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        function processDeposit(did, uid, status) {
+            db.collection('deposits').doc(did).update({ status: status });
+            if(status === 'approved') db.collection('users').doc(uid).update({ membershipStatus: 'active' });
+            setTimeout(loadDeposits, 500);
+        }
+
+        // --- 6. TOOLS ---
+        const staticTools = [
+            { id: 't1', title: 'ফ্রিল্যান্সিং' }, { id: 't2', title: 'মোবাইল রিচার্জ' },
+            { id: 't3', title: 'ই-কমার্স' }, { id: 't4', title: 'প্যাসিভ ইনকাম' },
+            { id: 't5', title: 'অর্ডার লিস্ট' }, { id: 't6', title: 'অ্যাক্টিভ অর্ডারস' },
+            { id: 't7', title: 'সেলস ড্যাশবোর্ড' }, { id: 't8', title: 'ব্যালেন্স' },
+            { id: 't9', title: 'জিজ্ঞাসা' }, { id: 't10', title: 'ইউটিউব' },
+            { id: 't11', title: 'টেলিগ্রাম' }, { id: 't12', title: 'সাপোর্ট' }
+        ];
+
+        function loadTools() {
+            const div = document.getElementById('toolsGrid');
+            div.innerHTML = '';
+            db.collection('tools').get().then(snap => {
+                let links = {}; snap.forEach(d => links[d.id] = d.data().link);
+                staticTools.forEach(t => {
+                    div.innerHTML += `
+                        <div class="card-item">
+                            <div style="font-weight:600; margin-bottom:5px;">${t.title}</div>
+                            <input type="text" id="inp_${t.id}" class="input-box" value="${links[t.id] || ''}" placeholder="Link" style="font-size:12px; height:35px; margin-bottom:5px;">
+                            <button class="btn btn-gold" style="width:100%; font-size:11px;" onclick="db.collection('tools').doc('${t.id}').set({link: document.getElementById('inp_${t.id}').value}, {merge:true}).then(()=>alert('Saved'))">Save</button>
+                        </div>`;
+                });
+            });
+        }
+
+        // --- 7. SETTINGS ---
+        function loadSettings() {
+            db.collection('settings').doc('config').get().then(doc => {
+                if(doc.exists) {
+                    const d = doc.data();
+                    document.getElementById('numBkash').value = d.bkash || '';
+                    document.getElementById('swBkash').checked = d.isBkashActive || false;
+                    document.getElementById('numNagad').value = d.nagad || '';
+                    document.getElementById('swNagad').checked = d.isNagadActive || false;
+                    
+                    document.getElementById('setFee').value = d.activationFee || 500;
+                    document.getElementById('linkPrint').value = d.customPrintLink || '';
+                    document.getElementById('setNotice').value = d.notice || '';
+                }
+            });
+        }
+
+        function saveSettings(type) {
+            const data = {};
+            if(type === 'payment') {
+                data.bkash = document.getElementById('numBkash').value;
+                data.isBkashActive = document.getElementById('swBkash').checked;
+                data.nagad = document.getElementById('numNagad').value;
+                data.isNagadActive = document.getElementById('swNagad').checked;
+            } else {
+                data.activationFee = Number(document.getElementById('setFee').value);
+                data.customPrintLink = document.getElementById('linkPrint').value;
+                data.notice = document.getElementById('setNotice').value;
+            }
+            db.collection('settings').doc('config').set(data, { merge: true }).then(() => alert('Updated!'));
+        }
+
+        // Helper
+        function deleteDoc(col, id) { if(confirm("Delete?")) db.collection(col).doc(id).delete().then(() => { if(col==='products') loadProducts(); else loadServices(); }); }
+        function loadDashboard() { db.collection('orders').where('status','==','pending').get().then(s=>document.getElementById('dash-orders').innerText=s.size); }
+
+    </script>
+</body>
+</html>
